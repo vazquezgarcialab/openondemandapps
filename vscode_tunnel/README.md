@@ -1,18 +1,23 @@
-# VS Code Tunnel Open OnDemand App
+# VS Code Tunnel — ERISTwo
 
-This app allows users to launch a VS Code tunnel on a compute node, enabling remote access to the compute environment from any VS Code instance.
+Launches a VS Code tunnel on an ERISTwo compute node, enabling remote access to the compute environment from any VS Code instance.
 
 ## Features
-- Select queue (CPU/GPU)
-- Specify number of cores, GPUs (including type), and memory
-- Load specific environment modules (default: `cuda/12.0`)
+- Select ERISTwo partition (`normal`, `bigmem`, `long`, `short`, `interactive`)
+- Specify number of cores and memory
+- Load specific environment modules (blank by default)
 - **Exclude specific nodes** from the allocation
-- Custom tunnel name (default: `iris_compute`)
+- Custom tunnel name (default: `eristwo_compute`)
 - Custom VS Code binary path (default: `~/.local/bin/code`)
 - Automatic extraction of authentication codes displayed in the session card
 
+## Prerequisites on ERISTwo
+Install the standalone VS Code CLI to `~/.local/bin/code`
+(https://update.code.visualstudio.com/latest/cli-linux-x64/stable).
+
 ## Installation
-Copy this directory to your Open OnDemand dev or sys apps directory.
+Copy this directory into `~/ondemand/dev/` (sandbox) or the admin apps root on the OnDemand host.
+`cluster: "eristwo"` in `form.yml.erb` must match the cluster id in `/etc/ood/config/clusters.d/*.yml`.
 
 ## Usage
 1. Open the VS Code Tunnel app from the Interactive Apps menu.
@@ -24,7 +29,7 @@ Copy this directory to your Open OnDemand dev or sys apps directory.
 7. After authentication, you can connect to the tunnel (named as specified in the form) from any VS Code instance (File > Remote-Tunnels: Connect to Tunnel).
 
 ## Tunnel Details
-- **Tunnel Name:** Configurable (default: `iris_compute`)
+- **Tunnel Name:** Configurable (default: `eristwo_compute`)
 - **Command:** `code tunnel --name <tunnel_name> --accept-server-license-terms`
 - **Default Binary:** `~/.local/bin/code`
 

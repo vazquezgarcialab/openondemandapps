@@ -1,15 +1,21 @@
-# VS Code Open OnDemand App
+# VS Code — ERISTwo
 
-This app allows users to launch a VS Code server on a compute node.
+Launches VS Code (`serve-web`) on an ERISTwo compute node — a browser IDE opened
+via the OnDemand "Connect" button.
 
 ## Features
-- Select queue (CPU/GPU)
-- Specify number of cores, GPUs, and memory
+- Select ERISTwo partition (`normal`, `bigmem`, `long`, `short`, `interactive`)
+- Specify number of cores and memory
 - **Exclude specific nodes** from the allocation
-- Custom VS Code binary and working directory
+- Custom VS Code binary path (default `~/.local/bin/code`)
+
+## Prerequisites on ERISTwo
+Install the standalone VS Code CLI to `~/.local/bin/code`
+(https://update.code.visualstudio.com/latest/cli-linux-x64/stable).
 
 ## Installation
-Copy this directory to your Open OnDemand dev or sys apps directory.
+Copy this directory into `~/ondemand/dev/` (sandbox) or the admin apps root on the OnDemand host.
+`cluster: "eristwo"` in `form.yml.erb` must match the cluster id in `/etc/ood/config/clusters.d/*.yml`.
 
 ## Usage
 1. Open the VS Code app from the Interactive Apps menu.
