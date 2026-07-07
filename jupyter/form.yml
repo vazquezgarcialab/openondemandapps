@@ -1,0 +1,83 @@
+# Batch Connect app configuration file
+#
+# @note Used to define the submitted cluster, title, description, and
+#   hard-coded/user-defined attributes that make up this Batch Connect app.
+---
+
+# **MUST** set cluster id here that matches cluster configuration file located
+# under /etc/ood/config/clusters.d/*.yml
+# @example Use the Owens cluster at Ohio Supercomputer Center
+#     cluster: "owens"
+# NOTE: must match the cluster id in ERISTwo's /etc/ood/config/clusters.d/*.yml
+cluster: "eristwo"
+
+# Define attribute values that aren't meant to be modified by the user within
+# the Dashboard form
+attributes:
+  # Set the corresponding modules that need to be loaded for Jupyter to run
+  #
+  # @note It is called within the batch job as `module load <modules>` if
+  #   defined
+  # @example Do not load any modules
+  #     modules: ""
+  # @example Using default python module
+  #     modules: "python"
+  modules: ""
+
+  # Any extra command line arguments to feed to the `jupyter notebook ...`
+  # command that launches the Jupyter notebook within the batch job
+  extra_jupyter_args: ""
+
+  queue:
+    widget: "select"
+    label: "Partition"
+    help: "ERISTwo SLURM partition. Wall-time limits differ per partition (see help under 'Number of minutes')."
+    options:
+      - [ "normal (1 day, default)",   "normal" ]
+      - [ "bigmem (2 days, ~1TB RAM)", "bigmem" ]
+      - [ "long (7 days)",             "long" ]
+      - [ "short (3 hours)",           "short" ]
+      - [ "interactive (12 hours)",    "interactive" ]
+  num_cores:
+    widget: "number_field"
+    label: "Number of cores"
+    value: 1
+    help: "Max cores per node: 96 (normal). Check `sinfo` for other partitions."
+    min: 1
+    step: 1
+  memory:
+    value: 8
+    step: 4
+    help: "Requested memory (GB)"
+  num_mins:
+    value: 60
+    min: 5
+    step: 1
+    help: "Wall time in minutes. Max depends on partition: normal 1440, short 180, interactive 720, bigmem 2880, long 10080."
+  jupyter_binary:
+    label: Jupyter Binary
+    help: Enter a path to the jupyter binary
+    value: 'jupyter-lab'
+  conda_env:
+    label: Conda Environment Name
+    help: Enter the name of the conda environment to use to launch jupyter (leave blank to use jupyter_binary directly)
+    value: 'jupyterlab'
+  notebook_directory:
+    label: Notebooks directory
+    help: Enter a path to the notebooks (defaults to $HOME if blank)
+    value: ''
+
+
+# All of the attributes that make up the Dashboard form (in respective order),
+# and made available to the submit configuration file and the template ERB
+# files
+form:
+  - modules
+  - extra_jupyter_args
+  - queue
+  - num_cores
+  - num_mins
+  - memory
+  - jupyter_binary
+  - conda_env
+  - notebook_directory

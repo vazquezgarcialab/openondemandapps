@@ -1,0 +1,64 @@
+---
+# NOTE: must match the cluster id in ERISTwo's /etc/ood/config/clusters.d/*.yml
+cluster: "eristwo"
+
+attributes:
+  modules:
+    label: "Modules"
+    widget: "text_field"
+    value: ""
+    help: "Space-separated list of modules to load (e.g. 'python/3.11'). Leave blank for none."
+
+  queue:
+    widget: "select"
+    label: "Partition"
+    help: "ERISTwo SLURM partition. Wall-time limits differ per partition."
+    options:
+      - [ "normal (1 day, default)",   "normal" ]
+      - [ "bigmem (2 days, ~1TB RAM)", "bigmem" ]
+      - [ "long (7 days)",             "long" ]
+      - [ "short (3 hours)",           "short" ]
+      - [ "interactive (12 hours)",    "interactive" ]
+
+  num_cores:
+    widget: "number_field"
+    label: "Number of cores"
+    value: 1
+    help: "Max cores per node: 96 (normal). Check `sinfo` for other partitions."
+    min: 1
+    step: 1
+
+  memory:
+    widget: "number_field"
+    label: "Memory (GB)"
+    value: 8
+    min: 1
+    step: 1
+    help: "Requested memory in GB"
+
+  num_hours:
+    widget: "number_field"
+    label: "Number of hours"
+    value: 1
+    min: 1
+    step: 1
+    help: "Wall time in hours (must fit the chosen partition's limit)."
+
+  excluded_nodes:
+    widget: "text_field"
+    label: "Excluded Nodes"
+    help: "Comma-separated list of nodes to exclude (e.g. node01,node02). Leave blank if none."
+
+  vscode_binary:
+    label: VS Code Binary
+    help: "Path to the VS Code CLI (e.g. ~/.local/bin/code). Install with the standalone CLI from https://update.code.visualstudio.com/latest/cli-linux-x64/stable."
+    value: '~/.local/bin/code'
+
+form:
+  - modules
+  - queue
+  - num_cores
+  - num_hours
+  - memory
+  - excluded_nodes
+  - vscode_binary

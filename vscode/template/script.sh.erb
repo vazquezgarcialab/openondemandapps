@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+# Benchmark info
+echo "TIMING - Starting main script at: $(date)"
+
+# Load modules
+<%- if !context.modules.blank? -%>
+module load <%= context.modules %>
+<%- end -%>
+
+# Set PFILE
+PFILE="${PWD}/password.txt"
+
+# Expand the binary path (handle leading ~)
+VSCODE_BIN="<%= context.vscode_binary %>"
+VSCODE_BIN="${VSCODE_BIN/#\~/$HOME}"
+
+# Start VS Code Server
+echo "TIMING - Starting vscode at: $(date)"
+
+set -x
+exec "${VSCODE_BIN}" serve-web \
+  --host="0.0.0.0" \
+  --port="${port}" \
+  --connection-token-file="${PFILE}" \
+  --accept-server-license-terms \
+  --server-base-path="/node/${host}/${port}/" \
+  --user-data-dir="${PWD}/config" \
+  --extensions-dir="${HOME}/.vscode-server/extensions"

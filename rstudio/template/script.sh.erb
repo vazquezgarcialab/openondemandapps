@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+# Load the required environment
+setup_env () {
+  module purge
+  # ERISTwo provides Apptainer/Singularity as a module (not on the base PATH).
+  # `module purge` above wipes it, so load it here before we call apptainer.
+  module load Apptainer/1.4.2-1.el9 2>/dev/null || module load singularity/latest 2>/dev/null || true
+}
+setup_env
+
+# Prefer apptainer, fall back to singularity
+CONTAINER_CMD="$(command -v apptainer || command -v singularity)"
+
+#
+# Start RStudio Server
+#
+
+# Export path to library packages
+export R_LIBS_USER="<%= context.r_packages %>"
+mkdir -p "${R_LIBS_USER}"
+
+# PAM auth helper used by RStudio
+export RSTUDIO_AUTH="${PWD}/bin/auth"
+
+# Generate an `rsession` wrapper script
+export RSESSION_WRAPPER_FILE="${PWD}/rsession.sh"
+(
+umask 077
+sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
+  #!/usr/bin/env bash
+
+  echo 'slurm:x:300:300::/opt/slurm/slurm:/bin/false' >> /etc/passwd
+  # We fix the path and remove all the junk I had
+  export PATH=/usr/lib/rstudio-server/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:\$HOME/.local/host/bin:\$PATH
+
+  export XDG_CACHE_HOME="\${HOME}/.cache/"
+
+  # Log all output from this script
+  export RSESSION_LOG_FILE="${PWD}/rsession.log"
+
+  exec &>>"\${RSESSION_LOG_FILE}"
+
+  # Launch the original command
+  echo "Launching rsession..."
+  set -x
+  exec rsession --r-libs-user "${R_LIBS_USER}" "\${@}"
+EOL
+)
+chmod 700 "${RSESSION_WRAPPER_FILE}"
+
+# Set working directory to home directory
+cd "${HOME}"
+
+export TMPDIR=`mktemp -d`
+
+mkdir -p $TMPDIR/{run,var-lib-rstudio-server,local-share-rstudio,usr}
+
+# Fix rstudio active session error on start (only if prior sessions exist)
+if compgen -G "${HOME}/.rstudio/sessions/active/*/session-persistent-state" > /dev/null; then
+  find ${HOME}/.rstudio/sessions/active/*/session-persistent-state -type f \
+    -exec sed -i -e 's/abend="1"/abend="0"/' {} \;
+fi
+
+set -x
+# Launch the RStudio Server
+echo "Starting up rserver..."
+
+export RSTUDIO_USER="${USER}"
+
+# ERISTwo bind mounts:
+#   - data & home filesystems: /data (lab data) and /PHShome (home)
+#   - SLURM/munge so the rsession can submit jobs from inside the container:
+#     /run/munge, libmunge (in /lib64 on ERISTwo), SLURM plugins (/usr/lib64/slurm),
+#     and /etc/slurm (present on compute nodes)
+"${CONTAINER_CMD}" exec -B "$TMPDIR:/tmp" \
+ -B "$TMPDIR/run:/run" \
+ -B "$TMPDIR/var-lib-rstudio-server:/var/lib/rstudio-server" \
+ -B "$TMPDIR/local-share-rstudio:/home/rstudio/.local/share/rstudio" \
+ -B "/data:/data" \
+ -B "/PHShome:/PHShome" \
+ -B "/run/munge/,/usr/lib64/slurm,/lib64/libmunge.so.2" \
+ $( [ -d /etc/slurm ] && echo -B /etc/slurm/ ) \
+ -B "${HOME}:${HOME}" \
+ "<%= context.rstudio_image %>" rserver \
+ --server-user="${RSTUDIO_USER}" \
+ --www-port="${port}" \
+ --auth-none=0 \
+ --auth-pam-require-password-prompt=0 \
+ --auth-pam-helper-path="${RSTUDIO_AUTH}" \
+ --auth-encrypt-password=0 \
+ --auth-timeout-minutes=600 \
+ --rsession-path="${RSESSION_WRAPPER_FILE}"
+
+# note, rserver in the container will start with the user space environment defined on host
+# BUT, the rsession starts on limited environment, only related to R = no SLURM*, http*, ...
+# so anything we want to pass to rsession needs to be set in $RSESSION_WRAPPER_FILE

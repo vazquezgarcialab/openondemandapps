@@ -1,0 +1,84 @@
+<%
+  # Default per-user locations on ERISTwo. Users can drop their own RStudio
+  # Apptainer image under ~/ondemand/images/rstudio/ and R libraries will be
+  # created on first launch. Swap these for a shared lab path (e.g. under
+  # /data/vazquez) once images are staged centrally.
+  home = ENV['HOME']
+  img_dir = "#{home}/ondemand/images/rstudio"
+  rlib_dir = "#{home}/R/rstudio-apptainer"
+%>
+# Batch Connect app configuration file
+#
+# @note Used to define the submitted cluster, title, description, and
+#   hard-coded/user-defined attributes that make up this Batch Connect app.
+---
+
+# **MUST** set cluster id here that matches cluster configuration file located
+# under /etc/ood/config/clusters.d/*.yml
+# NOTE: must match the cluster id in ERISTwo's /etc/ood/config/clusters.d/*.yml
+cluster: "eristwo"
+
+# Define attribute values that aren't meant to be modified by the user within
+# the Dashboard form
+attributes:
+  # Modules to load inside the batch job (e.g. "R/4.5"). Left blank because R
+  # is provided by the Apptainer image below.
+  modules: ""
+
+  extra_rstudio_args: ""
+
+  queue:
+    widget: "select"
+    label: "Partition"
+    help: "ERISTwo SLURM partition. Wall-time limits differ per partition."
+    options:
+      - [ "normal (1 day, default)",   "normal" ]
+      - [ "bigmem (2 days, ~1TB RAM)", "bigmem" ]
+      - [ "long (7 days)",             "long" ]
+      - [ "short (3 hours)",           "short" ]
+      - [ "interactive (12 hours)",    "interactive" ]
+  num_cores:
+    widget: "number_field"
+    label: "Number of cores"
+    value: 8
+    help: "Max cores per node: 96 (normal). Check `sinfo` for other partitions."
+    min: 1
+    step: 1
+  num_hours:
+    widget: "number_field"
+    label: "Number of hours"
+    value: 8
+    min: 1
+    step: 1
+    help: "Wall time in hours (must fit the chosen partition's limit)."
+  memory:
+    widget: "number_field"
+    label: "Memory (GB)"
+    value: 8
+    min: 8
+    step: 1
+  rstudio_image:
+    widget: "select"
+    label: RStudio image version
+    help: "Apptainer/Singularity RStudio image. Stage the .sif files under the path shown."
+    options:
+      - [ "4.5.1", "<%= img_dir %>/rstudio-4.5.1.sif", data-set-r-packages: "<%= rlib_dir %>/4.5" ]
+      - [ "4.4.1", "<%= img_dir %>/rstudio-4.4.1.sif", data-set-r-packages: "<%= rlib_dir %>/4.4" ]
+      - [ "4.3.2", "<%= img_dir %>/rstudio-4.3.2.sif", data-set-r-packages: "<%= rlib_dir %>/4.3" ]
+  r_packages:
+    widget: "select"
+    label: R packages library
+    help: "Per-version R library (auto-selected from the image version; created on first launch)."
+    options:
+      - [ "4.5", "<%= rlib_dir %>/4.5" ]
+      - [ "4.4", "<%= rlib_dir %>/4.4" ]
+      - [ "4.3", "<%= rlib_dir %>/4.3" ]
+
+form:
+  - modules
+  - queue
+  - num_cores
+  - num_hours
+  - memory
+  - rstudio_image
+  - r_packages

@@ -1,0 +1,23 @@
+---
+batch_connect:
+  template: "basic"
+
+script:
+  queue_name: "<%= queue %>"
+  native:
+     - "-p"
+     - "<%= queue %>"
+     - "-N"
+     - "1"
+     - "-n"
+     - "1"
+     - "-c"
+     - "<%= num_cores %>"
+     - "--mem"
+     - "<%= memory %>G"
+     - "-t"
+     - "0-<%= num_hours %>:00:00"
+     <%- if !excluded_nodes.blank? -%>
+     - "--exclude"
+     - "<%= excluded_nodes %>"
+     <%- end -%>
