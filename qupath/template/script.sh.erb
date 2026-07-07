@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# This script runs *inside* the QuPath container, within the TurboVNC session.
+
+# Set working directory to home directory
+cd "${HOME}"
+
+#
+# Launch Xfce Window Manager and Panel
+#
+(
+  export SEND_256_COLORS_TO_REMOTE=1
+  export XDG_CONFIG_HOME="<%= session.staged_root.join("config") %>"
+  export XDG_DATA_HOME="<%= session.staged_root.join("share") %>"
+  export XDG_CACHE_HOME="$(mktemp -d)"
+  set -x
+  eval $(dbus-launch --sh-syntax 2>/dev/null)
+  xfwm4 --compositor=off --daemon --sm-client-disable
+  xsetroot -solid "#D3D3D3"
+  xfsettingsd --sm-client-disable
+  xfce4-panel --sm-client-disable
+) &
+
+#
+# Start QuPath
+#
+set -x
+# `QuPath` must be on PATH inside the container (a wrapper around the QuPath
+# launcher). The XFCE Applications menu also has a QuPath launcher.
+QuPath
+
+# Keep the desktop alive if QuPath is closed so the user can relaunch from the menu
+sleep infinity

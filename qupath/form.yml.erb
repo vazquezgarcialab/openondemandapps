@@ -1,0 +1,57 @@
+<%
+  # Default per-user image location on ERISTwo. Stage an Apptainer image that
+  # bundles TurboVNC + XFCE + QuPath here, or edit to a shared /data/vazquez path.
+  img = "#{ENV['HOME']}/ondemand/images/qupath/qupath.sif"
+%>
+---
+# NOTE: must match the cluster id in ERISTwo's /etc/ood/config/clusters.d/*.yml
+cluster: "eristwo"
+
+attributes:
+  queue:
+    widget: "select"
+    label: "Partition"
+    help: "ERISTwo SLURM partition. Wall-time limits differ per partition."
+    options:
+      - [ "normal (1 day, default)",   "normal" ]
+      - [ "bigmem (2 days, ~1TB RAM)", "bigmem" ]
+      - [ "long (7 days)",             "long" ]
+      - [ "short (3 hours)",           "short" ]
+      - [ "interactive (12 hours)",    "interactive" ]
+
+  num_cores:
+    widget: "number_field"
+    label: "Number of cores"
+    value: 4
+    min: 1
+    step: 1
+    help: "Max cores per node: 96 (normal). Check `sinfo` for other partitions."
+
+  memory:
+    widget: "number_field"
+    label: "Memory (GB)"
+    value: 16
+    min: 1
+    step: 1
+    help: "Requested memory in GB (whole-slide images benefit from more)."
+
+  num_hours:
+    widget: "number_field"
+    label: "Number of hours"
+    value: 8
+    min: 1
+    step: 1
+    help: "Wall time in hours (must fit the chosen partition's limit)."
+
+  qupath_image:
+    label: "QuPath Apptainer image"
+    widget: "text_field"
+    value: "<%= img %>"
+    help: "Path to an Apptainer/Singularity .sif bundling TurboVNC + XFCE + QuPath."
+
+form:
+  - queue
+  - num_cores
+  - memory
+  - num_hours
+  - qupath_image

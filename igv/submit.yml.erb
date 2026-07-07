@@ -1,0 +1,43 @@
+<%-
+  cores = num_cores.to_i
+  mem   = memory.to_i
+  hours = num_hours.to_i
+-%>
+---
+batch_connect:
+  # OOD's VNC template: starts TurboVNC + websockify/noVNC, then runs the
+  # generated session script (the "%s" below) inside our container.
+  template: vnc
+  script_wrapper: |
+    set -x
+    # Apptainer/Singularity is a module on ERISTwo (not on the base PATH)
+    module load Apptainer/1.4.2-1.el9 2>/dev/null || module load singularity/latest 2>/dev/null || true
+    CONTAINER_CMD="$(command -v apptainer || command -v singularity)"
+
+    # Bind data/home filesystems, plus SLURM/munge so jobs can be seen inside
+    # the container. libmunge lives in /lib64 on ERISTwo; /etc/slurm only on
+    # compute nodes.
+    export APPTAINER_BINDPATH="/data,/PHShome,/run/munge,/usr/lib64/slurm,/lib64/libmunge.so.2$( [ -d /etc/slurm ] && echo ,/etc/slurm )"
+    export SINGULARITY_BINDPATH="${APPTAINER_BINDPATH}"
+
+    cat << "EOF" > container.sh
+    # TurboVNC binaries live under /opt/TurboVNC/bin inside the image
+    export PATH="$PATH:/opt/TurboVNC/bin"
+    %s
+    EOF
+    chmod u+x container.sh
+
+    "${CONTAINER_CMD}" exec "<%= igv_image %>" /bin/bash "$(readlink -f container.sh)"
+
+script:
+  native:
+    - "--partition"
+    - "<%= queue %>"
+    - "--nodes"
+    - "1"
+    - "--ntasks"
+    - "<%= cores %>"
+    - "--mem"
+    - "<%= mem %>G"
+    - "--time"
+    - "<%= hours %>:00:00"

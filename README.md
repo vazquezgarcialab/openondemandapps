@@ -12,10 +12,12 @@ cluster at MGH.
 | `cellxgene` | cellxgene viewer for an `.h5ad` file (path entered in the form). |
 | `vscode` | VS Code `serve-web` (browser IDE, opened via the OOD "Connect" button). |
 | `vscode_tunnel` | VS Code tunnel (connect from a local VS Code / vscode.dev). |
+| `igv` | IGV desktop GUI in an XFCE/VNC session (large genomic data). |
+| `qupath` | QuPath desktop GUI in an XFCE/VNC session (large bioimage / whole-slide data). |
 
-QuPath and IGV are **not yet included**. When added they should follow the `bc_desktop`/noVNC + TurboVNC
-pattern (desktop GUIs, unlike the web-server apps here); see `nuitrcs/quest_ood_qupath`,
-`bihealth/ood-bih-igv`, `mcw-rcc/bc_rcc_igv` for reference implementations.
+`igv` and `qupath` are **desktop GUI** apps: they use OOD's `vnc` Batch Connect template (TurboVNC +
+noVNC) and run an Apptainer image that bundles TurboVNC + XFCE + the application, rather than the
+web-server template the other apps use.
 
 ## ERISTwo specifics
 
@@ -29,7 +31,7 @@ pattern (desktop GUIs, unlike the web-server apps here); see `nuitrcs/quest_ood_
 - **Filesystems:** `/data` (lab data) and `/PHShome` (home).
 - **Containers:** Apptainer via `module load Apptainer/1.4.2-1.el9` (falls back to `singularity/latest`).
 
-## Per-app setup still required on ERISTwo
+## Per-app setup required on ERISTwo
 
 - **rstudio:** stage RStudio Apptainer images at the paths the form expects
   (`~/ondemand/images/rstudio/rstudio-<ver>.sif`, or edit `rstudio/form.yml.erb` to a shared
@@ -41,6 +43,10 @@ pattern (desktop GUIs, unlike the web-server apps here); see `nuitrcs/quest_ood_
   (https://update.code.visualstudio.com/latest/cli-linux-x64/stable).
 - **cellxgene:** provide a `cellxgene` binary (e.g. a conda env under `/data/vazquez`) or set its path in
   the form.
+- **igv / qupath:** stage an Apptainer image bundling **TurboVNC + XFCE + the app** at the path the form
+  expects (`~/ondemand/images/igv/igv.sif`, `~/ondemand/images/qupath/qupath.sif`). Inside the container,
+  `igv` / `QuPath` must be on PATH and TurboVNC under `/opt/TurboVNC/bin`. These apps also require the OOD
+  `vnc` template to be enabled on the ERISTwo portal (needs `websockify`/noVNC).
 
 ## Deploy & verify
 
