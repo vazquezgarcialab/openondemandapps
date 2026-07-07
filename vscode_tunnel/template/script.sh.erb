@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+
+# Benchmark info
+echo "TIMING - Starting main script at: $(date)"
+
+# Load modules
+<%- if !context.modules.blank? -%>
+module load <%= context.modules %>
+<%- end -%>
+
+# Expand the binary path (handle ~)
+VSCODE_BIN="<%= context.vscode_binary %>"
+VSCODE_BIN="${VSCODE_BIN/#\~/$HOME}"
+
+# Get the tunnel name from form
+TUNNEL_NAME="<%= context.tunnel_name %>"
+
+# Create log directory and file
+LOG_DIR="${HOME}/.cache/${HOSTNAME}"
+mkdir -p "${LOG_DIR}"
+LOG_FILE="${LOG_DIR}/vscode_tunnel.log"
+STATUS_FILE="${LOG_DIR}/vscode_tunnel_status.txt"
+
+# Initialize status file
+echo "Starting tunnel..." > "${STATUS_FILE}"
+
+# Start VS Code Tunnel
+echo "TIMING - Starting VS Code tunnel at: $(date)"
+echo "Tunnel name: ${TUNNEL_NAME}"
+echo "VS Code binary: ${VSCODE_BIN}"
+echo "Log file: ${LOG_FILE}"
+echo "Status file: ${STATUS_FILE}"
+echo "================================"
+echo ""
+
+# Background process to monitor log and update status
+(
+  sleep 5
+  AUTH_DETECTED=false
+  for i in {1..60}; do
+    if [ -f "${LOG_FILE}" ]; then
+      # Check if tunnel is ready
+      if grep -qi "Open this link in your browser" "${LOG_FILE}"; then
+        echo "Tunnel is ready to use" > "${STATUS_FILE}"
+        break
+      fi
+      
+      # Check for authentication line (only if not already detected ready state)
+      if [ "${AUTH_DETECTED}" = "false" ]; then
+        AUTH_LINE=$(grep -i "To grant access to the server" "${LOG_FILE}" | head -1)
+        if [ -n "${AUTH_LINE}" ]; then
+          # Extract URL from the line (pattern: https://...)
+          URL=$(echo "${AUTH_LINE}" | grep -oP 'https://[^\s]+')
+          # Extract code (pattern: ####-#### where # is uppercase letter or number)
+          CODE=$(echo "${AUTH_LINE}" | grep -oP '[A-Z0-9]{4}-[A-Z0-9]{4}')
+          if [ -n "${URL}" ] && [ -n "${CODE}" ]; then
+            echo "To grant access to the server:<br><a href=\"${URL}\" target=\"_blank\">${URL}</a><br><strong>Code: ${CODE}</strong>" > "${STATUS_FILE}"
+          elif [ -n "${URL}" ]; then
+            echo "To grant access to the server, open: <a href=\"${URL}\" target=\"_blank\">${URL}</a>" > "${STATUS_FILE}"
+          else
+            echo "${AUTH_LINE}" > "${STATUS_FILE}"
+          fi
+          AUTH_DETECTED=true
+        fi
+      fi
+    fi
+    sleep 2
+  done
+) &
+
+set -x
+exec "${VSCODE_BIN}" tunnel \
+  --name "${TUNNEL_NAME}" \
+  --accept-server-license-terms \
+  > "${LOG_FILE}" 2>&1

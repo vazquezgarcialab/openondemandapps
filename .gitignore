@@ -1,0 +1,5 @@
+# JVM crash logs (from local IGV/QuPath test launches)
+hs_err_pid*.log
+# Built images / large artifacts (kept out of git; built to ~/ondemand/images)
+*.sif
+*.simg

@@ -1,0 +1,13 @@
+<%
+  status_file = File.join(ENV['HOME'], '.cache', host, 'vscode_tunnel_status.txt')
+  status_text = File.exist?(status_file) ? File.read(status_file).strip : 'Waiting for tunnel to start...'
+%>
+
+<div class="alert alert-info" role="alert">
+  <h4 class="alert-heading"><i class="fa fa-info-circle"></i> Tunnel Status</h4>
+  <p><%= status_text %></p>
+</div>
+
+<a href="/pun/sys/dashboard/files/fs<%= ENV['HOME'] %>/.cache/<%= host %>/vscode_tunnel.log" class="btn btn-default" target="_blank">
+  <i class="fa fa-file-text-o"></i> View Full Logs
+</a>

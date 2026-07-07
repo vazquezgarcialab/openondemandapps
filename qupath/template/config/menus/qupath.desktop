@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=QuPath
+Comment=QuPath bioimage analysis
+Exec=QuPath
+Terminal=true
+Categories=Data Viewers;
+StartupNotify=true

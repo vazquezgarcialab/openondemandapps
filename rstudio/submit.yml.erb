@@ -1,0 +1,25 @@
+# Job submission configuration file
+#
+---
+#
+# Configure the content of the job script for the batch job here
+# @see http://www.rubydoc.info/gems/ood_core/OodCore/BatchConnect/Template
+#
+batch_connect:
+  template: "basic"
+  conn_params:
+     - csrf_token
+
+script:
+  queue_name: "<%= queue %>"
+  native: # ... array of command line arguments ...
+     - "--partition"
+     - "<%= queue %>"
+     - "--nodes"
+     - 1
+     - "--ntasks"
+     - "<%= num_cores %>"
+     - "--mem"
+     - "<%= memory %>G"
+     - "--time"
+     - "<%= num_hours %>:00:00"
