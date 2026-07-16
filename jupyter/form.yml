@@ -9,7 +9,7 @@
 # @example Use the Owens cluster at Ohio Supercomputer Center
 #     cluster: "owens"
 # NOTE: must match the cluster id in ERISTwo's /etc/ood/config/clusters.d/*.yml
-cluster: "eristwo"
+cluster: "nucleus"
 
 # Define attribute values that aren't meant to be modified by the user within
 # the Dashboard form
@@ -22,7 +22,8 @@ attributes:
   #     modules: ""
   # @example Using default python module
   #     modules: "python"
-  modules: ""
+  # On ERIS/nucleus, Jupyter is provided by the `JupyterNotebook` module.
+  modules: "JupyterNotebook"
 
   # Any extra command line arguments to feed to the `jupyter notebook ...`
   # command that launches the Jupyter notebook within the batch job
@@ -56,12 +57,12 @@ attributes:
     help: "Wall time in minutes. Max depends on partition: normal 1440, short 180, interactive 720, bigmem 2880, long 10080."
   jupyter_binary:
     label: Jupyter Binary
-    help: Enter a path to the jupyter binary
-    value: 'jupyter-lab'
+    help: "Jupyter launcher (e.g. jupyter-notebook or jupyter-lab). Provided by the JupyterNotebook module on nucleus."
+    value: 'jupyter-notebook'
   conda_env:
     label: Conda Environment Name
-    help: Enter the name of the conda environment to use to launch jupyter (leave blank to use jupyter_binary directly)
-    value: 'jupyterlab'
+    help: "Optional: name of a conda env to launch jupyter from. Leave blank to use the module/binary directly."
+    value: ''
   notebook_directory:
     label: Notebooks directory
     help: Enter a path to the notebooks (defaults to $HOME if blank)
