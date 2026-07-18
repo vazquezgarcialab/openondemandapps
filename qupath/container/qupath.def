@@ -43,9 +43,9 @@ From: ubuntu:22.04
         https://github.com/qupath/qupath/releases/download/v${QP_VER}/QuPath-v${QP_VER}-Linux.tar.xz
     tar -xJf /tmp/qupath.tar.xz -C /opt
     rm -f /tmp/qupath.tar.xz
-    QP_DIR="$(find /opt -maxdepth 1 -type d -name 'QuPath*' | head -1)"
-    # The launcher inside the tarball is bin/QuPath (may be suffixed with the version)
-    QP_BIN="$(find "$QP_DIR/bin" -maxdepth 1 -type f -name 'QuPath*' | head -1)"
+    # Tarball layout is QuPath-v<ver>-Linux/QuPath/bin/QuPath — find the launcher wherever it lands
+    QP_BIN="$(find /opt -type f -name 'QuPath' -path '*/bin/*' | head -1)"
+    test -n "$QP_BIN"
     chmod +x "$QP_BIN"
     ln -s "$QP_BIN" /usr/local/bin/QuPath
 
