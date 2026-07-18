@@ -1,5 +1,5 @@
 <%
-  # Default per-user locations on ERISTwo. Users can drop their own RStudio
+  # Default per-user locations on ERIS Nucleus. Users can drop their own RStudio
   # Apptainer image under ~/ondemand/images/rstudio/ and R libraries will be
   # created on first launch. Swap these for a shared lab path (e.g. under
   # /data/vazquez) once images are staged centrally.
@@ -15,7 +15,7 @@
 
 # **MUST** set cluster id here that matches cluster configuration file located
 # under /etc/ood/config/clusters.d/*.yml
-# NOTE: must match the cluster id in ERISTwo's /etc/ood/config/clusters.d/*.yml
+# NOTE: must match the cluster id in ERIS Nucleus's /etc/ood/config/clusters.d/*.yml
 cluster: "nucleus"
 
 # Define attribute values that aren't meant to be modified by the user within
@@ -30,7 +30,7 @@ attributes:
   queue:
     widget: "select"
     label: "Partition"
-    help: "ERISTwo SLURM partition. Wall-time limits differ per partition."
+    help: "ERIS Nucleus SLURM partition. Wall-time limits differ per partition."
     options:
       - [ "normal (1 day, default)",   "normal" ]
       - [ "bigmem (2 days, ~1TB RAM)", "bigmem" ]

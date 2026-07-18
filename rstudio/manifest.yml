@@ -5,4 +5,4 @@ subcategory: Servers
 role: batch_connect
 description: |
   This app will launch RStudio Server (an IDE for R) inside an Apptainer
-  container on one node of the ERISTwo cluster.
+  container on one node of the ERIS Nucleus cluster.

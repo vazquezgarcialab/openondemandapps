@@ -1,7 +1,7 @@
-# IGV — ERISTwo
+# IGV — ERIS Nucleus
 
 Launches the IGV (Integrative Genomics Viewer) desktop GUI inside an XFCE/VNC
-session on an ERISTwo compute node, for interactive visualization of large
+session on an ERIS Nucleus compute node, for interactive visualization of large
 genomic data (BAM/CRAM, VCF, BED, bigWig, ...).
 
 This is a **desktop GUI** app: it uses OnDemand's `vnc` Batch Connect template
@@ -9,7 +9,7 @@ This is a **desktop GUI** app: it uses OnDemand's `vnc` Batch Connect template
 
 ## Form options
 
-- **Partition** — ERISTwo SLURM partition (`normal`, `bigmem`, `long`, `short`, `interactive`)
+- **Partition** — ERIS Nucleus SLURM partition (`normal`, `bigmem`, `long`, `short`, `interactive`)
 - **Number of cores / Memory / Number of hours** — job resources
 - **IGV Apptainer image** — path to the `.sif` (default `~/ondemand/images/igv/igv.sif`)
 
@@ -27,7 +27,7 @@ apptainer build ~/ondemand/images/igv/igv.sif igv/container/igv.def
 (On ERIS there is no fakeroot mapping, so Apptainer builds unprivileged via proot — no extra flags
 needed. `~/ondemand/images` can be a symlink to `/data/vazquez/...` to keep images off the home quota.)
 
-## Prerequisites on ERISTwo
+## Prerequisites on ERIS Nucleus
 
 - An **Apptainer image** bundling **TurboVNC + XFCE + IGV**, staged at the path in the form (build it
   as above). Inside the image, `igv` is on `PATH` and TurboVNC under `/opt/TurboVNC/bin`.
@@ -44,5 +44,5 @@ the XFCE Applications menu.
 
 ## Notes
 
-- `cluster: "eristwo"` in `form.yml.erb` must match the cluster id in
+- `cluster: "nucleus"` in `form.yml.erb` must match the cluster id in
   `/etc/ood/config/clusters.d/*.yml` on the portal host.

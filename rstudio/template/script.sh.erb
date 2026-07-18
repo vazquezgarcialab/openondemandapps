@@ -3,7 +3,7 @@
 # Load the required environment
 setup_env () {
   module purge
-  # ERISTwo provides Apptainer/Singularity as a module (not on the base PATH).
+  # ERIS Nucleus provides Apptainer/Singularity as a module (not on the base PATH).
   # `module purge` above wipes it, so load it here before we call apptainer.
   module load Apptainer/1.4.2-1.el9 2>/dev/null || module load singularity/latest 2>/dev/null || true
 }
@@ -68,10 +68,10 @@ echo "Starting up rserver..."
 
 export RSTUDIO_USER="${USER}"
 
-# ERISTwo bind mounts:
+# ERIS Nucleus bind mounts:
 #   - data & home filesystems: /data (lab data) and /PHShome (home)
 #   - SLURM/munge so the rsession can submit jobs from inside the container:
-#     /run/munge, libmunge (in /lib64 on ERISTwo), SLURM plugins (/usr/lib64/slurm),
+#     /run/munge, libmunge (in /lib64 on ERIS Nucleus), SLURM plugins (/usr/lib64/slurm),
 #     and /etc/slurm (present on compute nodes)
 "${CONTAINER_CMD}" exec -B "$TMPDIR:/tmp" \
  -B "$TMPDIR/run:/run" \

@@ -5,7 +5,7 @@ category: Interactive Apps
 subcategory: Data Viewers
 role: batch_connect
 description: |
-  Launch the QuPath GUI inside an XFCE session on an ERISTwo compute node, for
+  Launch the QuPath GUI inside an XFCE session on an ERIS Nucleus compute node, for
   interactive analysis of large bioimage / whole-slide image data.
 
   [QuPath]: https://qupath.readthedocs.io/en/stable/

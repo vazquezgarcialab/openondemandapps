@@ -1,17 +1,17 @@
 <%
-  # Default per-user image location on ERISTwo. Stage an Apptainer image that
+  # Default per-user image location on ERIS Nucleus. Stage an Apptainer image that
   # bundles TurboVNC + XFCE + IGV here, or edit to a shared /data/vazquez path.
   img = "#{ENV['HOME']}/ondemand/images/igv/igv.sif"
 %>
 ---
-# NOTE: must match the cluster id in ERISTwo's /etc/ood/config/clusters.d/*.yml
+# NOTE: must match the cluster id in ERIS Nucleus's /etc/ood/config/clusters.d/*.yml
 cluster: "nucleus"
 
 attributes:
   queue:
     widget: "select"
     label: "Partition"
-    help: "ERISTwo SLURM partition. Wall-time limits differ per partition."
+    help: "ERIS Nucleus SLURM partition. Wall-time limits differ per partition."
     options:
       - [ "normal (1 day, default)",   "normal" ]
       - [ "bigmem (2 days, ~1TB RAM)", "bigmem" ]

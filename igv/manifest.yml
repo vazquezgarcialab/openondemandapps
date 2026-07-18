@@ -5,5 +5,5 @@ subcategory: Data Viewers
 role: batch_connect
 description: |
   Launch the IGV (Integrative Genomics Viewer) desktop GUI inside an XFCE
-  session on an ERISTwo compute node, for interactive visualization of large
+  session on an ERIS Nucleus compute node, for interactive visualization of large
   genomic data (BAM/CRAM, VCF, BED, bigWig, ...).
