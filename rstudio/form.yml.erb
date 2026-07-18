@@ -62,16 +62,16 @@ attributes:
     label: RStudio image version
     help: "Apptainer/Singularity RStudio image. Stage the .sif files under the path shown."
     options:
-      - [ "4.5.1", "<%= img_dir %>/rstudio-4.5.1.sif", data-set-r-packages: "<%= rlib_dir %>/4.5" ]
       - [ "4.4.1", "<%= img_dir %>/rstudio-4.4.1.sif", data-set-r-packages: "<%= rlib_dir %>/4.4" ]
+      - [ "4.5.1", "<%= img_dir %>/rstudio-4.5.1.sif", data-set-r-packages: "<%= rlib_dir %>/4.5" ]
       - [ "4.3.2", "<%= img_dir %>/rstudio-4.3.2.sif", data-set-r-packages: "<%= rlib_dir %>/4.3" ]
   r_packages:
     widget: "select"
     label: R packages library
     help: "Per-version R library (auto-selected from the image version; created on first launch)."
     options:
-      - [ "4.5", "<%= rlib_dir %>/4.5" ]
       - [ "4.4", "<%= rlib_dir %>/4.4" ]
+      - [ "4.5", "<%= rlib_dir %>/4.5" ]
       - [ "4.3", "<%= rlib_dir %>/4.3" ]
 
 form:

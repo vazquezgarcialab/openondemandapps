@@ -1,0 +1,59 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+# Apptainer image bundling TurboVNC + XFCE + QuPath for the Open OnDemand `vnc`
+# app on ERIS/nucleus. Build:
+#   module load Apptainer
+#   export APPTAINER_CACHEDIR=/data/vazquez/users/$USER/.apptainer/cache
+#   apptainer build qupath.sif qupath.def
+# Then place qupath.sif at ~/ondemand/images/qupath/qupath.sif (symlink to /data is fine).
+
+%labels
+    Maintainer Vazquez-Garcia Lab
+    App QuPath desktop for Open OnDemand (VNC)
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    # Desktop + X + VNC runtime deps (perl/xfonts/xkb are required by TurboVNC's vncserver)
+    apt-get install -y --no-install-recommends \
+        ca-certificates wget curl xz-utils \
+        perl xauth xkb-data x11-xkb-utils xfonts-base \
+        dbus-x11 x11-xserver-utils xterm \
+        xfce4 xfce4-session xfwm4 xfce4-panel xfce4-settings xfconf xfce4-terminal \
+        libxtst6 libxi6 libxrender1 libxext6 libxxf86vm1 \
+        libgtk-3-0 libgl1-mesa-glx libgl1-mesa-dri libglu1-mesa \
+        fonts-dejavu \
+        python3 python3-pip
+
+    # websockify — the OnDemand `vnc` template proxies the VNC session through it
+    pip3 install --no-cache-dir websockify
+
+    # TurboVNC — provides the `vncserver`/`Xvnc` that the OOD vnc template launches
+    TVNC_VER=3.1.2
+    wget -O /tmp/turbovnc.deb \
+        https://github.com/TurboVNC/turbovnc/releases/download/${TVNC_VER}/turbovnc_${TVNC_VER}_amd64.deb
+    apt-get install -y /tmp/turbovnc.deb
+    rm -f /tmp/turbovnc.deb
+
+    # QuPath (the Linux tarball ships its own JRE, so no system Java needed)
+    QP_VER=0.5.1
+    wget -O /tmp/qupath.tar.xz \
+        https://github.com/qupath/qupath/releases/download/v${QP_VER}/QuPath-v${QP_VER}-Linux.tar.xz
+    tar -xJf /tmp/qupath.tar.xz -C /opt
+    rm -f /tmp/qupath.tar.xz
+    QP_DIR="$(find /opt -maxdepth 1 -type d -name 'QuPath*' | head -1)"
+    # The launcher inside the tarball is bin/QuPath (may be suffixed with the version)
+    QP_BIN="$(find "$QP_DIR/bin" -maxdepth 1 -type f -name 'QuPath*' | head -1)"
+    chmod +x "$QP_BIN"
+    ln -s "$QP_BIN" /usr/local/bin/QuPath
+
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+%environment
+    export PATH=/opt/TurboVNC/bin:$PATH
+
+%test
+    /opt/TurboVNC/bin/vncserver --help 2>&1 | head -1 || true
+    test -e /usr/local/bin/QuPath && echo "QuPath launcher present"

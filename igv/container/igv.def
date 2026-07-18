@@ -1,0 +1,55 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+# Apptainer image bundling TurboVNC + XFCE + IGV for the Open OnDemand `vnc`
+# app on ERIS/nucleus. Build:
+#   module load Apptainer
+#   export APPTAINER_CACHEDIR=/data/vazquez/users/$USER/.apptainer/cache
+#   apptainer build igv.sif igv.def
+# Then place igv.sif at ~/ondemand/images/igv/igv.sif (symlink to /data is fine).
+
+%labels
+    Maintainer Vazquez-Garcia Lab
+    App IGV (Integrative Genomics Viewer) desktop for Open OnDemand (VNC)
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    # Desktop + X + VNC runtime deps (perl/xfonts/xkb are required by TurboVNC's vncserver)
+    apt-get install -y --no-install-recommends \
+        ca-certificates wget curl unzip \
+        perl xauth xkb-data x11-xkb-utils xfonts-base \
+        dbus-x11 x11-xserver-utils xterm \
+        xfce4 xfce4-session xfwm4 xfce4-panel xfce4-settings xfconf xfce4-terminal \
+        libxtst6 libxi6 libxrender1 libxext6 libgtk-3-0 libgl1-mesa-glx libgl1-mesa-dri \
+        fonts-dejavu \
+        python3 python3-pip
+
+    # websockify — the OnDemand `vnc` template proxies the VNC session through it
+    pip3 install --no-cache-dir websockify
+
+    # TurboVNC — provides the `vncserver`/`Xvnc` that the OOD vnc template launches
+    TVNC_VER=3.1.2
+    wget -O /tmp/turbovnc.deb \
+        https://github.com/TurboVNC/turbovnc/releases/download/${TVNC_VER}/turbovnc_${TVNC_VER}_amd64.deb
+    apt-get install -y /tmp/turbovnc.deb
+    rm -f /tmp/turbovnc.deb
+
+    # IGV (the *WithJava* bundle ships its own JRE, so no system Java needed)
+    IGV_VER=2.17.4
+    wget -O /tmp/igv.zip \
+        https://data.broadinstitute.org/igv/projects/downloads/2.17/IGV_Linux_${IGV_VER}_WithJava.zip
+    unzip -q /tmp/igv.zip -d /opt
+    rm -f /tmp/igv.zip
+    ln -s /opt/IGV_Linux_${IGV_VER}/igv.sh /usr/local/bin/igv
+    chmod +x /opt/IGV_Linux_${IGV_VER}/igv.sh
+
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+%environment
+    export PATH=/opt/TurboVNC/bin:$PATH
+
+%test
+    /opt/TurboVNC/bin/vncserver --help 2>&1 | head -1 || true
+    test -x /usr/local/bin/igv && echo "igv launcher present"

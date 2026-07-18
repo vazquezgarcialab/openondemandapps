@@ -45,8 +45,8 @@ attributes:
     help: "Wall time in hours (must fit the chosen partition's limit)."
   cellxgene_binary:
     label: cellxgene Binary
-    help: "Path to the cellxgene executable (e.g. from a conda env under /data/vazquez), or just 'cellxgene' if on PATH."
-    value: 'cellxgene'
+    help: "Path to the cellxgene executable (a conda env under /data/vazquez), or just 'cellxgene' if on PATH."
+    value: '/data/vazquez/users/iv064/software/miniforge3/envs/cellxgene_env/bin/cellxgene'
   anndata_file:
     label: "Dataset (.h5ad)"
     widget: "text_field"
