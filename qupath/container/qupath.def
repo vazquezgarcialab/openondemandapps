@@ -38,7 +38,7 @@ From: ubuntu:22.04
     rm -f /tmp/turbovnc.deb
 
     # QuPath (the Linux tarball ships its own JRE, so no system Java needed)
-    QP_VER=0.5.1
+    QP_VER=0.7.0
     wget -O /tmp/qupath.tar.xz \
         https://github.com/qupath/qupath/releases/download/v${QP_VER}/QuPath-v${QP_VER}-Linux.tar.xz
     tar -xJf /tmp/qupath.tar.xz -C /opt
