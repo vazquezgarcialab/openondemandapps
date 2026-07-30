@@ -1,0 +1,9 @@
+---
+name: marimo
+category: Interactive Apps
+subcategory: Servers
+role: batch_connect
+description: |
+  Launch a marimo reactive Python notebook server on an ERIS Nucleus compute
+  node. marimo notebooks are reactive and stored as plain, git-friendly `.py`
+  files — a modern alternative to Jupyter.

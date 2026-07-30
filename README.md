@@ -14,12 +14,14 @@ SLURM cluster at Mass General Brigham, served from the portal at
 | `vscode_tunnel` | VS Code tunnel (connect from a local VS Code / vscode.dev). |
 | `igv` | IGV desktop GUI in an XFCE/VNC session (large genomic data). |
 | `qupath` | QuPath desktop GUI in an XFCE/VNC session (large bioimage / whole-slide data). |
+| `blender` | Blender 3D suite desktop GUI in an XFCE/VNC session (software GL; VirtualGL-ready for GPUs). |
 | `cellxgene` | cellxgene viewer for an `.h5ad` file (path entered in the form). |
 | `tensorboard` | TensorBoard server for ML training logs (scalars, graphs, embeddings). |
+| `marimo` | marimo reactive Python notebook server (git-friendly `.py` notebooks). |
 
-`igv` and `qupath` are **desktop GUI** apps: they use OOD's `vnc` Batch Connect template (TurboVNC +
-noVNC) and run an Apptainer image that bundles TurboVNC + XFCE + the application, rather than the
-web-server template the other apps use.
+`igv`, `qupath`, and `blender` are **desktop GUI** apps: they use OOD's `vnc` Batch Connect template
+(TurboVNC + noVNC) and run an Apptainer image that bundles TurboVNC + XFCE + the application, rather than
+the web-server template the other apps use.
 
 ## Install these apps on your account
 
@@ -46,9 +48,10 @@ git clone https://github.com/vazquezgarcialab/openondemandapps.git ~/ondemand/de
 | `vscode`, `vscode_tunnel` | Install the VS Code CLI to `~/.local/bin/code` |
 | `cellxgene` | A conda env with `cellxgene`; set its path in the **cellxgene Binary** field |
 | `tensorboard` | A conda env with `tensorboard`; the form defaults to a shared `tensorboard_env` |
-| `rstudio`, `igv`, `qupath` | Nothing for lab members — the forms point at **shared images** under `/data/vazquez/ondemand/images/` (group-readable). ✅ |
+| `marimo` | A conda env with `marimo`; the form defaults to a shared `marimo_env` |
+| `rstudio`, `igv`, `qupath`, `blender` | Nothing for lab members — the forms point at **shared images** under `/data/vazquez/ondemand/images/` (group-readable). ✅ |
 
-The container images are built once and shared at `/data/vazquez/ondemand/images/{rstudio,igv,qupath}/`,
+The container images are built once and shared at `/data/vazquez/ondemand/images/{rstudio,igv,qupath,blender}/`,
 so lab members need no image setup. Building your own instead? Point the app's **image** field at your
 own `.sif` (see [Building the container images](#building-the-container-images)).
 
@@ -82,13 +85,18 @@ Each app calls an external backend:
 - **tensorboard:** a conda env with tensorboard (form points at
   `…/miniforge3/envs/tensorboard_env/bin/tensorboard`); served behind OOD's `/node` proxy with
   `--path_prefix`.
-- **rstudio / igv / qupath:** Apptainer images, **shared for the lab** under
+- **marimo:** a conda env with marimo (form points at
+  `…/miniforge3/envs/marimo_env/bin/marimo`); served behind OOD's `/node` proxy with `--base-url`,
+  gated by marimo's built-in token auth.
+- **rstudio / igv / qupath / blender:** Apptainer images, **shared for the lab** under
   `/data/vazquez/ondemand/images/{app}/` (group-readable; built once, no per-user copy):
   - `rstudio/rstudio-4.4.1.sif` — pulled from `docker://rocker/rstudio:4.4.1`. R libraries stay
     per-user at `~/R/rstudio-apptainer/<ver>` (writable, created on first launch).
   - `igv/igv.sif` — built from [`igv/container/igv.def`](igv/container/igv.def) (TurboVNC + XFCE + IGV).
   - `qupath/qupath.sif` — built from [`qupath/container/qupath.def`](qupath/container/qupath.def)
     (TurboVNC + XFCE + QuPath v0.7.0).
+  - `blender/blender.sif` — built from [`blender/container/blender.def`](blender/container/blender.def)
+    (TurboVNC + XFCE + Blender 4.2 LTS + VirtualGL; software GL on CPU, `vglrun` on GPU nodes).
 
   The RStudio container bind-mounts `/run/munge`, `/lib64/libmunge.so.2`, `/usr/lib64/slurm` (and
   `/etc/slurm` if present) so `rsession` can submit SLURM jobs. The `igv`/`qupath` apps also require the

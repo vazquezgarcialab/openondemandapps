@@ -1,0 +1,8 @@
+# Export the module function if it exists
+[[ $(type -t module) == "function" ]] && export -f module
+
+# Find an available port for marimo
+port=$(find_port)
+
+# marimo has built-in token auth; use it as the connection password
+password="$(create_passwd 24)"

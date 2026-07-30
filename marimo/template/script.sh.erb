@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+# Benchmark info
+echo "TIMING - Starting main script at: $(date)"
+
+cd "${HOME}"
+export PYTHONNOUSERSITE=1
+
+# Expand paths (handle leading ~)
+MARIMO_BIN="<%= context.marimo_binary %>"
+MARIMO_BIN="${MARIMO_BIN/#\~/$HOME}"
+NB="<%= context.notebook_path %>"
+NB="${NB/#\~/$HOME}"
+
+echo "TIMING - Starting marimo at: $(date)"
+
+# marimo serves under the OnDemand /node reverse proxy: --base-url sets the path
+# prefix, --proxy sets the external host so generated links are correct, and
+# --token-password gates access. Bind all interfaces so the proxy can reach us.
+set -x
+exec "${MARIMO_BIN}" edit \
+  --headless \
+  --host 0.0.0.0 \
+  --port "${port}" \
+  --base-url "/node/${host}/${port}" \
+  --proxy "openondemand.research.mgb.org:443" \
+  --token-password "${password}" \
+  ${NB:+"${NB}"}

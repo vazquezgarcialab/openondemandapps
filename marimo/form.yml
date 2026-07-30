@@ -1,0 +1,64 @@
+# Batch Connect app configuration file
+---
+
+# NOTE: must match the cluster id in ERIS Nucleus's /etc/ood/config/clusters.d/*.yml
+cluster: "nucleus"
+
+attributes:
+  queue:
+    widget: "select"
+    label: "Partition"
+    help: "ERIS Nucleus SLURM partition. Wall-time limits differ per partition."
+    options:
+      - [ "normal (1 day, default)",   "normal" ]
+      - [ "bigmem (2 days, ~1TB RAM)", "bigmem" ]
+      - [ "long (7 days)",             "long" ]
+      - [ "short (3 hours)",           "short" ]
+      - [ "interactive (12 hours)",    "interactive" ]
+
+  num_cores:
+    widget: "number_field"
+    label: "Number of cores"
+    value: 1
+    min: 1
+    max: 96
+    step: 1
+    help: "Max cores per node: 96 (normal)."
+
+  memory:
+    widget: "number_field"
+    label: "Memory (GB)"
+    value: 8
+    min: 1
+    max: 1000
+    step: 1
+    help: "Requested memory in GB."
+
+  num_hours:
+    widget: "number_field"
+    label: "Number of hours"
+    value: 12
+    min: 1
+    max: 168
+    step: 1
+    help: "Wall time in hours (must fit the chosen partition's limit)."
+
+  notebook_path:
+    label: "Notebook or directory (optional)"
+    widget: "text_field"
+    value: ""
+    help: "A marimo `.py` notebook to open, or a directory to browse. Defaults to $HOME."
+
+  marimo_binary:
+    label: "marimo binary"
+    widget: "text_field"
+    value: "/data/vazquez/users/iv064/software/miniforge3/envs/marimo_env/bin/marimo"
+    help: "Path to the marimo executable (a conda env), or just 'marimo' if on PATH."
+
+form:
+  - queue
+  - num_cores
+  - memory
+  - num_hours
+  - notebook_path
+  - marimo_binary
