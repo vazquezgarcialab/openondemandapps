@@ -62,3 +62,4 @@ form:
   - num_hours
   - notebook_path
   - marimo_binary
+  - bc_email_on_started

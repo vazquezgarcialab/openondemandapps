@@ -63,3 +63,4 @@ form:
   - num_hours
   - mlflow_dir
   - mlflow_binary
+  - bc_email_on_started

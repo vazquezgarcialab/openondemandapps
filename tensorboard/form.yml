@@ -70,3 +70,4 @@ form:
   - tb_logdir
   - tb_extra_args
   - tb_binary
+  - bc_email_on_started

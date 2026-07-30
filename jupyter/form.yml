@@ -93,3 +93,4 @@ form:
   - conda_env
   - notebook_directory
   - envscript
+  - bc_email_on_started

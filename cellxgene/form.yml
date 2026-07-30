@@ -66,3 +66,4 @@ form:
   - memory
   - cellxgene_binary
   - anndata_file
+  - bc_email_on_started
