@@ -2,6 +2,10 @@
 
 # This script runs *inside* the IGV container, within the TurboVNC session.
 
+# Drop $HOME entries from PATH so a user's conda/.local binaries (dbus-launch,
+# python, ...) can't hijack the XFCE session.
+export PATH="$(printf '%s' "$PATH" | tr ':' '\n' | grep -v "^${HOME}" | paste -sd: -)"
+
 # Set working directory to home directory
 cd "${HOME}"
 

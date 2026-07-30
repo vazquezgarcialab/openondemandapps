@@ -73,6 +73,10 @@ attributes:
     label: Notebooks directory
     help: Enter a path to the notebooks (defaults to $HOME if blank)
     value: ''
+  envscript:
+    label: Environment setup script
+    help: "Optional: a file to `source` before launch (activate a venv, spack, etc.). Leave blank if unused."
+    value: ''
 
 
 # All of the attributes that make up the Dashboard form (in respective order),
@@ -88,3 +92,4 @@ form:
   - jupyter_binary
   - conda_env
   - notebook_directory
+  - envscript

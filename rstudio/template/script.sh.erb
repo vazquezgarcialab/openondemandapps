@@ -105,7 +105,8 @@ export RSTUDIO_USER="${USER}"
  --auth-pam-require-password-prompt=0 \
  --auth-pam-helper-path="${RSTUDIO_AUTH}" \
  --auth-encrypt-password=0 \
- --auth-timeout-minutes=600 \
+ --auth-timeout-minutes=0 \
+ --auth-stay-signed-in-days=30 \
  --rsession-path="${RSESSION_WRAPPER_FILE}"
 
 # note, rserver in the container will start with the user space environment defined on host
