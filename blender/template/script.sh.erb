@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# This script runs *inside* the Blender container, within the TurboVNC session.
+
+# Drop $HOME entries from PATH so a user's conda/.local binaries (dbus-launch,
+# python, ...) can't hijack the XFCE session.
+export PATH="$(printf '%s' "$PATH" | tr ':' '\n' | grep -v "^${HOME}" | paste -sd: -)"
+
+# Set working directory to home directory
+cd "${HOME}"
+
+#
+# Launch Xfce Window Manager and Panel
+#
+(
+  export SEND_256_COLORS_TO_REMOTE=1
+  export XDG_CONFIG_HOME="<%= session.staged_root.join("config") %>"
+  export XDG_DATA_HOME="<%= session.staged_root.join("share") %>"
+  export XDG_CACHE_HOME="$(mktemp -d)"
+  set -x
+  eval $(dbus-launch --sh-syntax 2>/dev/null)
+  xfwm4 --compositor=off --sm-client-disable &
+  xsetroot -solid "#D3D3D3"
+  xfsettingsd --sm-client-disable &
+  xfce4-panel --sm-client-disable &
+) &
+
+#
+# Start Blender
+#
+set -x
+# GPU node -> hardware-accelerated GL via VirtualGL; CPU node -> Mesa software GL.
+if command -v nvidia-smi >/dev/null 2>&1 && command -v vglrun >/dev/null 2>&1; then
+  vglrun blender
+else
+  export LIBGL_ALWAYS_SOFTWARE=1
+  export GALLIUM_DRIVER=llvmpipe
+  blender
+fi
+
+# Keep the desktop alive if Blender is closed so the user can relaunch from the menu
+sleep infinity

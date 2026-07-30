@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Blender
+Comment=3D creation suite
+Exec=blender
+Terminal=false
+Categories=Graphics;
+StartupNotify=true

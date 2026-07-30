@@ -1,0 +1,60 @@
+<%
+  # Shared lab image (group-readable under /data/vazquez). Point at your own
+  # ~/ondemand/images/blender/blender.sif instead if you build a custom image.
+  img = "/data/vazquez/ondemand/images/blender/blender.sif"
+%>
+---
+# NOTE: must match the cluster id in ERIS Nucleus's /etc/ood/config/clusters.d/*.yml
+cluster: "nucleus"
+
+attributes:
+  queue:
+    widget: "select"
+    label: "Partition"
+    help: "ERIS Nucleus SLURM partition. Wall-time limits differ per partition."
+    options:
+      - [ "normal (1 day, default)",   "normal" ]
+      - [ "bigmem (2 days, ~1TB RAM)", "bigmem" ]
+      - [ "long (7 days)",             "long" ]
+      - [ "short (3 hours)",           "short" ]
+      - [ "interactive (12 hours)",    "interactive" ]
+
+  num_cores:
+    widget: "number_field"
+    label: "Number of cores"
+    value: 4
+    min: 1
+    max: 96
+    step: 1
+    help: "More cores speed up CPU rendering. Max per node: 96 (normal)."
+
+  memory:
+    widget: "number_field"
+    label: "Memory (GB)"
+    value: 8
+    min: 1
+    max: 1000
+    step: 1
+    help: "Requested memory in GB (large scenes need more)."
+
+  num_hours:
+    widget: "number_field"
+    label: "Number of hours"
+    value: 12
+    min: 1
+    max: 168
+    step: 1
+    help: "Wall time in hours (must fit the chosen partition's limit)."
+
+  blender_image:
+    label: "Blender Apptainer image"
+    widget: "text_field"
+    value: "<%= img %>"
+    help: "Path to an Apptainer/Singularity .sif bundling TurboVNC + XFCE + Blender."
+
+form:
+  - queue
+  - num_cores
+  - memory
+  - num_hours
+  - blender_image

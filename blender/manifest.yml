@@ -1,0 +1,9 @@
+---
+name: Blender
+icon: fa://cube
+category: Interactive Apps
+subcategory: Data Viewers
+role: batch_connect
+description: |
+  Launch the Blender 3D creation suite inside an XFCE/VNC session on an ERIS
+  Nucleus compute node, for 3D modeling, rendering, and scientific visualization.

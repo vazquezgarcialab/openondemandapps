@@ -1,0 +1,37 @@
+<%-
+  cores = num_cores.to_i
+  mem   = memory.to_i
+  hours = num_hours.to_i
+-%>
+---
+batch_connect:
+  # OOD's VNC template: starts TurboVNC + websockify/noVNC, then runs the
+  # generated session script (the "%s" below) inside our container. TurboVNC and
+  # websockify live in the image, so the whole VNC session runs inside it.
+  template: vnc
+  script_wrapper: |
+    set -x
+    module load Apptainer/1.4.2-1.el9 2>/dev/null || module load singularity/latest 2>/dev/null || true
+    CONTAINER_CMD="$(command -v apptainer || command -v singularity)"
+    # $HOME (/PHShome/<user>) is a symlink into /PHShome_actual — bind both.
+    export APPTAINER_BINDPATH="/data,/PHShome,/PHShome_actual"
+    export SINGULARITY_BINDPATH="${APPTAINER_BINDPATH}"
+    cat << "EOF" > container.sh
+    export PATH="$PATH:/opt/TurboVNC/bin"
+    export WEBSOCKIFY_CMD=/usr/local/bin/websockify
+    %s
+    EOF
+    chmod u+x container.sh
+    "${CONTAINER_CMD}" exec "<%= blender_image %>" /bin/bash "$(readlink -f container.sh)"
+script:
+  native:
+    - "--partition"
+    - "<%= queue %>"
+    - "--nodes"
+    - "1"
+    - "--ntasks"
+    - "<%= cores %>"
+    - "--mem"
+    - "<%= mem %>G"
+    - "--time"
+    - "<%= hours %>:00:00"
