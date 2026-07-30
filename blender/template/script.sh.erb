@@ -9,6 +9,10 @@ export PATH="$(printf '%s' "$PATH" | tr ':' '\n' | grep -v "^${HOME}" | paste -s
 # Set working directory to home directory
 cd "${HOME}"
 
+# Blender's GHOST layer probes Wayland and errors without a runtime dir; give it a
+# node-local one so it cleanly uses the X11 (Xvnc) backend.
+export XDG_RUNTIME_DIR="$(mktemp -d)"
+
 #
 # Launch Xfce Window Manager and Panel
 #

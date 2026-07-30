@@ -22,7 +22,8 @@ From: ubuntu:22.04
         perl xauth xkb-data x11-xkb-utils xfonts-base \
         dbus-x11 x11-xserver-utils xterm \
         xfce4 xfce4-session xfwm4 xfce4-panel xfce4-settings xfconf xfce4-terminal \
-        libgtk-3-0 hicolor-icon-theme adwaita-icon-theme librsvg2-common \
+        libgtk-3-0 libgtk-3-bin libgdk-pixbuf2.0-bin \
+        hicolor-icon-theme adwaita-icon-theme librsvg2-common \
         libgl1-mesa-glx libgl1-mesa-dri libglu1-mesa libegl1 \
         libxi6 libxxf86vm1 libxfixes3 libxrender1 libxrandr2 libxinerama1 libxcursor1 \
         libxkbcommon0 libsm6 libice6 libgomp1 fonts-dejavu \
@@ -54,6 +55,15 @@ From: ubuntu:22.04
     tar -xJf /tmp/blender.tar.xz -C /opt
     rm -f /tmp/blender.tar.xz
     ln -s /opt/${BL}/blender /usr/local/bin/blender
+
+    # Regenerate the gdk-pixbuf loader cache and GTK icon caches. The dpkg triggers
+    # that normally do this don't run reliably during an Apptainer build, leaving an
+    # empty loaders.cache -> gdk-pixbuf can't decode PNG -> xfce4-panel fatally bails
+    # ("Unrecognized image file format" loading image-missing.png). Do it explicitly.
+    /usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders --update-cache
+    update-mime-database /usr/share/mime || true
+    gtk-update-icon-cache -f -t /usr/share/icons/hicolor 2>/dev/null || true
+    gtk-update-icon-cache -f -t /usr/share/icons/Adwaita 2>/dev/null || true
 
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
