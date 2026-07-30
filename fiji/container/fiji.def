@@ -52,15 +52,16 @@ From: ubuntu:22.04
     apt-get install -y /tmp/virtualgl.deb
     rm -f /tmp/virtualgl.deb
 
-    # Fiji (bundles its own JRE — no system Java needed)
-    wget -O /tmp/fiji.zip https://downloads.imagej.net/fiji/latest/fiji-linux64.zip
+    # Fiji (the -jdk archive bundles its own JDK — no system Java needed)
+    wget -O /tmp/fiji.zip https://downloads.imagej.net/fiji/stable/fiji-stable-linux64-jdk.zip
     unzip -q /tmp/fiji.zip -d /opt
     rm -f /tmp/fiji.zip
-    # Locate the ImageJ launcher (dir is usually /opt/Fiji.app) and expose it as `fiji`
-    LAUNCHER="$(find /opt -maxdepth 2 -type f -name 'ImageJ-linux64' | head -1)"
+    # Locate the Fiji launcher and expose it as `fiji`. Newer Fiji uses a native
+    # launcher named 'fiji-linux64' (classic builds used 'ImageJ-linux64').
+    LAUNCHER="$(find /opt -maxdepth 3 -type f \( -name 'fiji-linux64' -o -name 'ImageJ-linux64' \) 2>/dev/null | head -1)"
     test -n "${LAUNCHER}"
     chmod +x "${LAUNCHER}"
-    ln -s "${LAUNCHER}" /usr/local/bin/fiji
+    ln -sf "${LAUNCHER}" /usr/local/bin/fiji
 
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
