@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# Benchmark info
+echo "TIMING - Starting main script at: $(date)"
+
+cd "${HOME}"
+export PYTHONNOUSERSITE=1
+
+# Expand the binary path (handle leading ~)
+MLFLOW_BIN="<%= context.mlflow_binary %>"
+MLFLOW_BIN="${MLFLOW_BIN/#\~/$HOME}"
+
+# Expand and ensure the tracking directory exists
+MLFLOW_DIR="<%= context.mlflow_dir %>"
+MLFLOW_DIR="${MLFLOW_DIR/#\~/$HOME}"
+mkdir -p "${MLFLOW_DIR}"
+
+echo "TIMING - Starting mlflow server at: $(date)"
+
+# Serve under the OnDemand /node reverse-proxy prefix so the UI's asset and API
+# URLs resolve (the /node proxy does not strip the prefix) — MLflow's own
+# --static-prefix handles this, analogous to TensorBoard's --path_prefix. Bind all
+# interfaces so the proxy on the OnDemand host can reach this compute node. A
+# file-based backend store shows runs written by a training script's default
+# ./mlruns (the model registry needs a database backend, so it's disabled here).
+set -x
+exec "${MLFLOW_BIN}" server \
+  --host 0.0.0.0 \
+  --port "${port}" \
+  --backend-store-uri "file:${MLFLOW_DIR}" \
+  --static-prefix "/node/${host}/${port}"

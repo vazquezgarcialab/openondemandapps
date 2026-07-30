@@ -1,0 +1,9 @@
+# Export the module function if it exists
+[[ $(type -t module) == "function" ]] && export -f module
+
+# Find an available port for the MLflow server to listen on
+port=$(find_port)
+
+# MLflow's tracking server has no authentication of its own here; access is gated
+# by the OnDemand login + reverse proxy. No password needed for the connection file.
+password=""

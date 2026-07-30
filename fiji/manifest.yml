@@ -1,0 +1,10 @@
+---
+name: Fiji
+category: Interactive Apps
+subcategory: Data Viewers
+role: batch_connect
+description: |
+  Launch Fiji (ImageJ) — the scientific image-analysis distribution — inside an
+  XFCE/VNC session on an ERIS Nucleus compute node. Includes Trainable Weka
+  Segmentation out of the box; StarDist / DeepImageJ / CSBDeep are available via
+  Fiji's update sites for deep-learning workflows.

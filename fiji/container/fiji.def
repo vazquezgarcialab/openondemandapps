@@ -1,0 +1,74 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+# Apptainer image bundling TurboVNC + XFCE (window manager only) + Fiji (ImageJ)
+# for the Open OnDemand `vnc` app on ERIS/nucleus. Fiji ships its own JRE; its
+# 3D Viewer renders via OpenGL -> software Mesa (llvmpipe) on CPU nodes, VirtualGL
+# (`vglrun`) on GPU nodes. Build:
+#   module load Apptainer/1.4.2-1.el9
+#   export APPTAINER_CACHEDIR=/data/vazquez/users/$USER/.apptainer/cache
+#   apptainer build fiji.sif fiji.def
+# Then place fiji.sif at /data/vazquez/ondemand/images/fiji/fiji.sif.
+
+%labels
+    Maintainer Vazquez-Garcia Lab
+    App Fiji (ImageJ) desktop for Open OnDemand (VNC, software OpenGL)
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    # Desktop + X + VNC runtime deps (perl/xfonts/xkb required by TurboVNC's vncserver).
+    # We run only the xfwm4 window manager (no xfce4-panel), so GTK is just for xfwm4.
+    # Fiji is Java/Swing (AWT) + OpenGL (3D Viewer); include the X/AWT/GL libs.
+    apt-get install -y --no-install-recommends \
+        ca-certificates wget curl unzip xz-utils \
+        perl xauth xkb-data x11-xkb-utils xfonts-base \
+        dbus-x11 x11-xserver-utils xterm \
+        xfce4-session xfwm4 xfconf \
+        libgtk-3-0 \
+        libgl1-mesa-glx libgl1-mesa-dri libglu1-mesa libegl1 \
+        libxext6 libxrender1 libxtst6 libxi6 libxrandr2 libxfixes3 libxcursor1 \
+        libxinerama1 libsm6 libice6 libfreetype6 fontconfig \
+        fonts-dejavu \
+        python3 python3-pip
+
+    # websockify — the OnDemand `vnc` template proxies the VNC session through it
+    pip3 install --no-cache-dir websockify
+
+    # TurboVNC — provides the vncserver/Xvnc the OOD vnc template launches
+    TVNC_VER=3.1.2
+    wget -O /tmp/turbovnc.deb \
+        https://github.com/TurboVNC/turbovnc/releases/download/${TVNC_VER}/turbovnc_${TVNC_VER}_amd64.deb
+    apt-get install -y /tmp/turbovnc.deb
+    rm -f /tmp/turbovnc.deb
+
+    # VirtualGL — for GPU nodes (hardware-accelerated GL via `vglrun`). Harmless on
+    # CPU nodes, where the launcher falls back to Mesa software GL. Bundled now so
+    # the image is GPU-ready once GPU partitions arrive.
+    VGL_VER=3.1.2
+    wget -O /tmp/virtualgl.deb \
+        https://github.com/VirtualGL/virtualgl/releases/download/${VGL_VER}/virtualgl_${VGL_VER}_amd64.deb
+    apt-get install -y /tmp/virtualgl.deb
+    rm -f /tmp/virtualgl.deb
+
+    # Fiji (bundles its own JRE — no system Java needed)
+    wget -O /tmp/fiji.zip https://downloads.imagej.net/fiji/latest/fiji-linux64.zip
+    unzip -q /tmp/fiji.zip -d /opt
+    rm -f /tmp/fiji.zip
+    # Locate the ImageJ launcher (dir is usually /opt/Fiji.app) and expose it as `fiji`
+    LAUNCHER="$(find /opt -maxdepth 2 -type f -name 'ImageJ-linux64' | head -1)"
+    test -n "${LAUNCHER}"
+    chmod +x "${LAUNCHER}"
+    ln -s "${LAUNCHER}" /usr/local/bin/fiji
+
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+%environment
+    export PATH=/opt/TurboVNC/bin:$PATH
+    # NOTE: software-GL env vars are set by the launcher only on the CPU path, so
+    # they don't defeat VirtualGL on GPU nodes.
+
+%test
+    /opt/TurboVNC/bin/vncserver --help 2>&1 | head -1 || true
+    test -x /usr/local/bin/fiji && echo "fiji launcher present"

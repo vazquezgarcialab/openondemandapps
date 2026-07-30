@@ -1,0 +1,65 @@
+# Batch Connect app configuration file
+---
+
+# NOTE: must match the cluster id in ERIS Nucleus's /etc/ood/config/clusters.d/*.yml
+cluster: "nucleus"
+
+attributes:
+  queue:
+    widget: "select"
+    label: "Partition"
+    help: "ERIS Nucleus SLURM partition. Wall-time limits differ per partition."
+    options:
+      - [ "normal (1 day, default)",   "normal" ]
+      - [ "bigmem (2 days, ~1TB RAM)", "bigmem" ]
+      - [ "long (7 days)",             "long" ]
+      - [ "short (3 hours)",           "short" ]
+      - [ "interactive (12 hours)",    "interactive" ]
+
+  num_cores:
+    widget: "number_field"
+    label: "Number of cores"
+    value: 1
+    min: 1
+    max: 96
+    step: 1
+    help: "MLflow's tracking server is light; 1-2 cores is usually plenty."
+
+  memory:
+    widget: "number_field"
+    label: "Memory (GB)"
+    value: 4
+    min: 1
+    max: 1000
+    step: 1
+    help: "Requested memory in GB (increase for very large artifact browsing)."
+
+  num_hours:
+    widget: "number_field"
+    label: "Number of hours"
+    value: 12
+    min: 1
+    max: 168
+    step: 1
+    help: "Wall time in hours (must fit the chosen partition's limit)."
+
+  mlflow_dir:
+    label: "Tracking directory (mlruns)"
+    widget: "text_field"
+    required: true
+    value: "/data/vazquez/ondemand/examples/mlflow"
+    help: "Full path to your MLflow tracking directory (the 'mlruns' dir a training run writes). Defaults to a small shared example so you can try the app immediately."
+
+  mlflow_binary:
+    label: "MLflow binary"
+    widget: "text_field"
+    value: "/data/vazquez/users/iv064/software/miniforge3/envs/mlflow_env/bin/mlflow"
+    help: "Path to the mlflow executable (a conda env), or just 'mlflow' if on PATH."
+
+form:
+  - queue
+  - num_cores
+  - memory
+  - num_hours
+  - mlflow_dir
+  - mlflow_binary

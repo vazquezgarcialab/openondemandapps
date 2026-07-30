@@ -1,0 +1,60 @@
+<%
+  # Shared lab image (group-readable under /data/vazquez). Point at your own
+  # ~/ondemand/images/fiji/fiji.sif instead if you build a custom image.
+  img = "/data/vazquez/ondemand/images/fiji/fiji.sif"
+%>
+---
+# NOTE: must match the cluster id in ERIS Nucleus's /etc/ood/config/clusters.d/*.yml
+cluster: "nucleus"
+
+attributes:
+  queue:
+    widget: "select"
+    label: "Partition"
+    help: "ERIS Nucleus SLURM partition. Wall-time limits differ per partition."
+    options:
+      - [ "normal (1 day, default)",   "normal" ]
+      - [ "bigmem (2 days, ~1TB RAM)", "bigmem" ]
+      - [ "long (7 days)",             "long" ]
+      - [ "short (3 hours)",           "short" ]
+      - [ "interactive (12 hours)",    "interactive" ]
+
+  num_cores:
+    widget: "number_field"
+    label: "Number of cores"
+    value: 4
+    max: 96
+    min: 1
+    step: 1
+    help: "Max cores per node: 96 (normal). Check `sinfo` for other partitions."
+
+  memory:
+    widget: "number_field"
+    label: "Memory (GB)"
+    value: 16
+    max: 1000
+    min: 1
+    step: 1
+    help: "Requested memory in GB (large images / stacks benefit from more; Fiji's JVM is sized from this)."
+
+  num_hours:
+    widget: "number_field"
+    label: "Number of hours"
+    value: 12
+    max: 168
+    min: 1
+    step: 1
+    help: "Wall time in hours (must fit the chosen partition's limit)."
+
+  fiji_image:
+    label: "Fiji Apptainer image"
+    widget: "text_field"
+    value: "<%= img %>"
+    help: "Path to an Apptainer/Singularity .sif bundling TurboVNC + XFCE + Fiji."
+
+form:
+  - queue
+  - num_cores
+  - memory
+  - num_hours
+  - fiji_image

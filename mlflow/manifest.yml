@@ -1,0 +1,8 @@
+---
+name: MLflow
+category: Interactive Apps
+subcategory: Servers
+role: batch_connect
+description: |
+  Launch an MLflow Tracking server to browse ML experiments, runs, parameters,
+  metrics, and artifacts from a tracking directory, in your browser.
