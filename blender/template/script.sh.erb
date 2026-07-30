@@ -14,8 +14,15 @@ cd "${HOME}"
 export XDG_RUNTIME_DIR="$(mktemp -d)"
 
 #
-# Launch Xfce Window Manager and Panel
+# Launch a minimal Xfce window manager (no panel).
 #
+# This is a single-application session: the user works full-screen in Blender, so
+# a taskbar/applications menu adds nothing. We deliberately do NOT start
+# xfce4-panel — on this Ubuntu image gdk-pixbuf can't decode PNG (the modular
+# png loader is absent and the built-in one isn't registering), so the panel
+# fatally aborts trying to load its fallback icon ("Unrecognized image file
+# format" loading image-missing.png). xfwm4 only emits non-fatal warnings, so we
+# keep it for window management (move/resize/maximize) plus a solid background.
 (
   export SEND_256_COLORS_TO_REMOTE=1
   export XDG_CONFIG_HOME="<%= session.staged_root.join("config") %>"
@@ -25,8 +32,6 @@ export XDG_RUNTIME_DIR="$(mktemp -d)"
   eval $(dbus-launch --sh-syntax 2>/dev/null)
   xfwm4 --compositor=off --sm-client-disable &
   xsetroot -solid "#D3D3D3"
-  xfsettingsd --sm-client-disable &
-  xfce4-panel --sm-client-disable &
 ) &
 
 #
