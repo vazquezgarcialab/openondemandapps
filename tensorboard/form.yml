@@ -47,7 +47,8 @@ attributes:
     label: "Log directory"
     widget: "text_field"
     required: true
-    help: "Full path to the directory containing your TensorBoard event logs (e.g. a training run's output)."
+    value: "/data/vazquez/ondemand/examples/tensorboard"
+    help: "Full path to the directory containing your TensorBoard event logs (e.g. a training run's output). Defaults to a small shared example logdir so you can try the app immediately."
 
   tb_extra_args:
     label: "Extra TensorBoard args (optional)"
