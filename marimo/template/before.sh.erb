@@ -4,5 +4,7 @@
 # Find an available port for marimo
 port=$(find_port)
 
-# marimo has built-in token auth; use it as the connection password
-password="$(create_passwd 24)"
+# marimo has built-in token auth; use it as the connection password.
+# Export it — OOD only auto-exports host/port to script.sh, not password, and
+# script.sh reads it directly for --token-password.
+export password="$(create_passwd 24)"
