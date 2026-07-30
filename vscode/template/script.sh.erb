@@ -15,6 +15,13 @@ PFILE="${PWD}/password.txt"
 VSCODE_BIN="<%= context.vscode_binary %>"
 VSCODE_BIN="${VSCODE_BIN/#\~/$HOME}"
 
+# Keep the ~600 MB server download/extract off the (slow) Panasas home: put both the
+# CLI data dir (where serve-web fetches/unpacks the server) and the server data dir on
+# node-local /tmp. Fast extract; re-downloaded per session, which is quick on local disk.
+VSCODE_TMP="$(mktemp -d "/tmp/vscode-${USER}-XXXXXX")"
+export VSCODE_CLI_DATA_DIR="${VSCODE_TMP}/cli"
+mkdir -p "${VSCODE_CLI_DATA_DIR}" "${VSCODE_TMP}/data"
+
 # Start VS Code Server
 echo "TIMING - Starting vscode at: $(date)"
 
@@ -25,4 +32,5 @@ exec "${VSCODE_BIN}" serve-web \
   --connection-token-file="${PFILE}" \
   --accept-server-license-terms \
   --server-base-path="/node/${host}/${port}/" \
-  --server-data-dir="${PWD}/config"
+  --cli-data-dir="${VSCODE_CLI_DATA_DIR}" \
+  --server-data-dir="${VSCODE_TMP}/data"

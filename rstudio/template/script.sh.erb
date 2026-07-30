@@ -36,6 +36,12 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
 
   export XDG_CACHE_HOME="\${HOME}/.cache/"
 
+  # Cap BLAS/OpenMP threads to the SLURM cpuset (Rocker's OpenBLAS/MKL otherwise
+  # spawn one thread per physical core on the node and oversubscribe shared nodes).
+  export OMP_NUM_THREADS="\${SLURM_CPUS_ON_NODE:-\${SLURM_CPUS_PER_TASK:-1}}"
+  export OPENBLAS_NUM_THREADS="\${OMP_NUM_THREADS}"
+  export MKL_THREADING_LAYER=GNU
+
   # Log all output from this script
   export RSESSION_LOG_FILE="${PWD}/rsession.log"
 
@@ -55,6 +61,13 @@ cd "${HOME}"
 export TMPDIR=`mktemp -d`
 
 mkdir -p $TMPDIR/{run,var-lib-rstudio-server,local-share-rstudio,usr}
+
+# RStudio Server >= 1.4 (all current Rocker images) expects a provisioning DB;
+# supply a session-local sqlite one to avoid startup warnings/failures.
+cat > "$TMPDIR/database.conf" <<'DBCONF'
+provider=sqlite
+directory=/var/lib/rstudio-server
+DBCONF
 
 # Fix rstudio active session error on start (only if prior sessions exist)
 if compgen -G "${HOME}/.rstudio/sessions/active/*/session-persistent-state" > /dev/null; then
@@ -78,6 +91,7 @@ export RSTUDIO_USER="${USER}"
 "${CONTAINER_CMD}" exec -B "$TMPDIR:/tmp" \
  -B "$TMPDIR/run:/run" \
  -B "$TMPDIR/var-lib-rstudio-server:/var/lib/rstudio-server" \
+ -B "$TMPDIR/database.conf:/etc/rstudio/database.conf" \
  -B "$TMPDIR/local-share-rstudio:/home/rstudio/.local/share/rstudio" \
  -B "/data:/data" \
  -B "/PHShome:/PHShome" \

@@ -50,7 +50,8 @@ cat > "${CONFIG_FILE}" << EOL
 c.ServerApp.ip = '*'
 c.ServerApp.port = ${port}
 c.ServerApp.port_retries = 0
-c.ServerApp.password = u'sha1:${SALT}:${PASSWORD_SHA1}'
+# Modern auth: PasswordIdentityProvider (c.ServerApp.password is deprecated in jupyter_server 2.x)
+c.PasswordIdentityProvider.hashed_password = u'sha1:${SALT}:${PASSWORD_SHA1}'
 c.ServerApp.base_url = '/node/${host}/${port}/'
 c.ServerApp.open_browser = False
 c.ServerApp.allow_origin = '*'
