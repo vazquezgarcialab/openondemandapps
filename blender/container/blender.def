@@ -22,6 +22,7 @@ From: ubuntu:22.04
         perl xauth xkb-data x11-xkb-utils xfonts-base \
         dbus-x11 x11-xserver-utils xterm \
         xfce4 xfce4-session xfwm4 xfce4-panel xfce4-settings xfconf xfce4-terminal \
+        libgtk-3-0 hicolor-icon-theme adwaita-icon-theme librsvg2-common \
         libgl1-mesa-glx libgl1-mesa-dri libglu1-mesa libegl1 \
         libxi6 libxxf86vm1 libxfixes3 libxrender1 libxrandr2 libxinerama1 libxcursor1 \
         libxkbcommon0 libsm6 libice6 libgomp1 fonts-dejavu \
