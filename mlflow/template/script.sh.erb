@@ -33,9 +33,14 @@ case "${MLFLOW_DIR}" in
   *://*) STORE_URI="${MLFLOW_DIR}" ;;
   *)     STORE_URI="file:${MLFLOW_DIR}" ;;
 esac
+# MLflow 3.x validates the Host header (DNS-rebinding protection) and rejects
+# requests arriving through the OnDemand /node proxy (whose Host is the portal
+# domain, not the compute node) with "Invalid Host header". Access here is already
+# gated by the OnDemand login + reverse proxy, so allow all hosts.
 set -x
 exec "${MLFLOW_BIN}" server \
   --host 0.0.0.0 \
   --port "${port}" \
   --backend-store-uri "${STORE_URI}" \
-  --static-prefix "/node/${host}/${port}"
+  --static-prefix "/node/${host}/${port}" \
+  --allowed-hosts "*"
