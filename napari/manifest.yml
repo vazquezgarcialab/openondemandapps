@@ -1,0 +1,10 @@
+---
+name: napari
+category: Interactive Apps
+subcategory: Data Viewers
+role: batch_connect
+description: |
+  Launch the napari multi-dimensional image viewer inside an XFCE/VNC session on
+  an ERIS Nucleus compute node — for interactive visualization and analysis of
+  large n-dimensional imaging data (microscopy, whole-slide, volumetric). The
+  image bundles cellpose (GPU-ready) for deep-learning cell/nucleus segmentation.

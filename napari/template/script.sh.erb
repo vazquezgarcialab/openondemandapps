@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# This script runs *inside* the napari container, within the TurboVNC session.
+
+# Drop $HOME entries from PATH so a user's conda/.local binaries (dbus-launch,
+# python, ...) can't hijack the XFCE session.
+export PATH="$(printf '%s' "$PATH" | tr ':' '\n' | grep -v "^${HOME}" | paste -sd: -)"
+
+# Set working directory to home directory
+cd "${HOME}"
+
+# napari's Qt/GHOST-style stack probes Wayland and errors without a runtime dir;
+# give it a node-local one so it cleanly uses the X11 (Xvnc) backend, and pin the
+# Qt platform to xcb (X11) inside the VNC session.
+export XDG_RUNTIME_DIR="$(mktemp -d)"
+export QT_QPA_PLATFORM=xcb
+
+#
+# Launch a minimal Xfce window manager (no panel).
+#
+# Single-application session: the user works full-screen in napari, so a
+# taskbar/applications menu adds nothing. We deliberately do NOT start
+# xfce4-panel — on this Ubuntu image gdk-pixbuf can't decode PNG, so the panel
+# fatally aborts loading its fallback icon ("Unrecognized image file format").
+# xfwm4 only emits non-fatal warnings, so we keep it for window management
+# (move/resize/maximize) plus a solid background.
+(
+  export SEND_256_COLORS_TO_REMOTE=1
+  export XDG_CONFIG_HOME="<%= session.staged_root.join("config") %>"
+  export XDG_DATA_HOME="<%= session.staged_root.join("share") %>"
+  export XDG_CACHE_HOME="$(mktemp -d)"
+  set -x
+  eval $(dbus-launch --sh-syntax 2>/dev/null)
+  xfwm4 --compositor=off --sm-client-disable &
+  xsetroot -solid "#D3D3D3"
+) &
+
+#
+# Start napari
+#
+set -x
+# GPU node -> hardware-accelerated GL via VirtualGL; CPU node -> Mesa software GL.
+if command -v nvidia-smi >/dev/null 2>&1 && command -v vglrun >/dev/null 2>&1; then
+  vglrun napari
+else
+  export LIBGL_ALWAYS_SOFTWARE=1
+  export GALLIUM_DRIVER=llvmpipe
+  napari
+fi
+
+# Keep the desktop alive if napari is closed so the user can relaunch from a terminal
+sleep infinity
