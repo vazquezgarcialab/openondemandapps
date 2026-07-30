@@ -1,6 +1,5 @@
 ---
 name: Blender
-icon: fa://cube
 category: Interactive Apps
 subcategory: Data Viewers
 role: batch_connect
