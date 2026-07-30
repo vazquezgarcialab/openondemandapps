@@ -15,13 +15,14 @@ SLURM cluster at Mass General Brigham, served from the portal at
 | `igv` | IGV desktop GUI in an XFCE/VNC session (large genomic data). |
 | `qupath` | QuPath desktop GUI in an XFCE/VNC session (large bioimage / whole-slide data). |
 | `blender` | Blender 3D suite desktop GUI in an XFCE/VNC session (software GL; VirtualGL-ready for GPUs). |
+| `napari` | napari n-dimensional image viewer in an XFCE/VNC session; bundles cellpose (deep-learning segmentation). |
 | `cellxgene` | cellxgene viewer for an `.h5ad` file (path entered in the form). |
 | `tensorboard` | TensorBoard server for ML training logs (scalars, graphs, embeddings). |
 | `marimo` | marimo reactive Python notebook server (git-friendly `.py` notebooks). |
 
-`igv`, `qupath`, and `blender` are **desktop GUI** apps: they use OOD's `vnc` Batch Connect template
-(TurboVNC + noVNC) and run an Apptainer image that bundles TurboVNC + XFCE + the application, rather than
-the web-server template the other apps use.
+`igv`, `qupath`, `blender`, and `napari` are **desktop GUI** apps: they use OOD's `vnc` Batch Connect
+template (TurboVNC + noVNC) and run an Apptainer image that bundles TurboVNC + XFCE + the application,
+rather than the web-server template the other apps use.
 
 ## Install these apps on your account
 
@@ -49,9 +50,9 @@ git clone https://github.com/vazquezgarcialab/openondemandapps.git ~/ondemand/de
 | `cellxgene` | A conda env with `cellxgene`; set its path in the **cellxgene Binary** field |
 | `tensorboard` | A conda env with `tensorboard`; the form defaults to a shared `tensorboard_env` |
 | `marimo` | A conda env with `marimo`; the form defaults to a shared `marimo_env` |
-| `rstudio`, `igv`, `qupath`, `blender` | Nothing for lab members — the forms point at **shared images** under `/data/vazquez/ondemand/images/` (group-readable). ✅ |
+| `rstudio`, `igv`, `qupath`, `blender`, `napari` | Nothing for lab members — the forms point at **shared images** under `/data/vazquez/ondemand/images/` (group-readable). ✅ |
 
-The container images are built once and shared at `/data/vazquez/ondemand/images/{rstudio,igv,qupath,blender}/`,
+The container images are built once and shared at `/data/vazquez/ondemand/images/{rstudio,igv,qupath,blender,napari}/`,
 so lab members need no image setup. Building your own instead? Point the app's **image** field at your
 own `.sif` (see [Building the container images](#building-the-container-images)).
 
@@ -97,6 +98,8 @@ Each app calls an external backend:
     (TurboVNC + XFCE + QuPath v0.7.0).
   - `blender/blender.sif` — built from [`blender/container/blender.def`](blender/container/blender.def)
     (TurboVNC + XFCE + Blender 4.2 LTS + VirtualGL; software GL on CPU, `vglrun` on GPU nodes).
+  - `napari/napari.sif` — built from [`napari/container/napari.def`](napari/container/napari.def)
+    (TurboVNC + xfwm4 + napari + cellpose + VirtualGL; software GL on CPU, `vglrun` on GPU nodes).
 
   The RStudio container bind-mounts `/run/munge`, `/lib64/libmunge.so.2`, `/usr/lib64/slurm` (and
   `/etc/slurm` if present) so `rsession` can submit SLURM jobs. The `igv`/`qupath` apps also require the
