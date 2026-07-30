@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# Benchmark info
+echo "TIMING - Starting main script at: $(date)"
+
+cd "${HOME}"
+export PYTHONNOUSERSITE=1
+
+# Expand the binary path (handle leading ~)
+TB_BIN="<%= context.tb_binary %>"
+TB_BIN="${TB_BIN/#\~/$HOME}"
+
+echo "TIMING - Starting tensorboard at: $(date)"
+
+# Serve under the OnDemand /node reverse-proxy prefix so TensorBoard's asset URLs
+# resolve (the /node proxy does not strip the prefix). Bind all interfaces so the
+# proxy on the OnDemand host can reach this compute node.
+set -x
+exec "${TB_BIN}" \
+  --logdir="<%= context.tb_logdir %>" \
+  --host=0.0.0.0 \
+  --port="${port}" \
+  --path_prefix="/node/${host}/${port}" \
+  <%= context.tb_extra_args %>

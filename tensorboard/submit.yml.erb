@@ -1,0 +1,20 @@
+<%-
+  cores = num_cores.to_i
+  mem   = memory.to_i
+  hours = num_hours.to_i
+-%>
+---
+batch_connect:
+  template: "basic"
+script:
+  native:
+    - "--partition"
+    - "<%= queue %>"
+    - "--nodes"
+    - "1"
+    - "--ntasks"
+    - "<%= cores %>"
+    - "--mem"
+    - "<%= mem %>G"
+    - "--time"
+    - "<%= hours %>:00:00"

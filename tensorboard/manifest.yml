@@ -1,0 +1,8 @@
+---
+name: TensorBoard
+category: Interactive Apps
+subcategory: Servers
+role: batch_connect
+description: |
+  Launch a TensorBoard server to explore ML training logs (scalars, graphs,
+  histograms, embeddings) from a log directory, in your browser.

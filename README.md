@@ -15,6 +15,7 @@ SLURM cluster at Mass General Brigham, served from the portal at
 | `igv` | IGV desktop GUI in an XFCE/VNC session (large genomic data). |
 | `qupath` | QuPath desktop GUI in an XFCE/VNC session (large bioimage / whole-slide data). |
 | `cellxgene` | cellxgene viewer for an `.h5ad` file (path entered in the form). |
+| `tensorboard` | TensorBoard server for ML training logs (scalars, graphs, embeddings). |
 
 `igv` and `qupath` are **desktop GUI** apps: they use OOD's `vnc` Batch Connect template (TurboVNC +
 noVNC) and run an Apptainer image that bundles TurboVNC + XFCE + the application, rather than the
@@ -44,6 +45,7 @@ git clone https://github.com/vazquezgarcialab/openondemandapps.git ~/ondemand/de
 | `jupyter` | Nothing — uses the `JupyterLab` module. ✅ works out of the box |
 | `vscode`, `vscode_tunnel` | Install the VS Code CLI to `~/.local/bin/code` |
 | `cellxgene` | A conda env with `cellxgene`; set its path in the **cellxgene Binary** field |
+| `tensorboard` | A conda env with `tensorboard`; the form defaults to a shared `tensorboard_env` |
 | `rstudio`, `igv`, `qupath` | Nothing for lab members — the forms point at **shared images** under `/data/vazquez/ondemand/images/` (group-readable). ✅ |
 
 The container images are built once and shared at `/data/vazquez/ondemand/images/{rstudio,igv,qupath}/`,
@@ -77,6 +79,9 @@ Each app calls an external backend:
   (<https://update.code.visualstudio.com/latest/cli-linux-x64/stable>).
 - **cellxgene:** a conda env with cellxgene (form points at
   `…/miniforge3/envs/cellxgene_env/bin/cellxgene`).
+- **tensorboard:** a conda env with tensorboard (form points at
+  `…/miniforge3/envs/tensorboard_env/bin/tensorboard`); served behind OOD's `/node` proxy with
+  `--path_prefix`.
 - **rstudio / igv / qupath:** Apptainer images, **shared for the lab** under
   `/data/vazquez/ondemand/images/{app}/` (group-readable; built once, no per-user copy):
   - `rstudio/rstudio-4.4.1.sif` — pulled from `docker://rocker/rstudio:4.4.1`. R libraries stay

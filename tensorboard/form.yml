@@ -1,0 +1,71 @@
+# Batch Connect app configuration file
+---
+
+# NOTE: must match the cluster id in ERIS Nucleus's /etc/ood/config/clusters.d/*.yml
+cluster: "nucleus"
+
+attributes:
+  queue:
+    widget: "select"
+    label: "Partition"
+    help: "ERIS Nucleus SLURM partition. Wall-time limits differ per partition."
+    options:
+      - [ "normal (1 day, default)",   "normal" ]
+      - [ "bigmem (2 days, ~1TB RAM)", "bigmem" ]
+      - [ "long (7 days)",             "long" ]
+      - [ "short (3 hours)",           "short" ]
+      - [ "interactive (12 hours)",    "interactive" ]
+
+  num_cores:
+    widget: "number_field"
+    label: "Number of cores"
+    value: 1
+    min: 1
+    max: 96
+    step: 1
+    help: "TensorBoard is light; 1-2 cores is usually plenty."
+
+  memory:
+    widget: "number_field"
+    label: "Memory (GB)"
+    value: 4
+    min: 1
+    max: 1000
+    step: 1
+    help: "Requested memory in GB (increase for very large event files / embeddings)."
+
+  num_hours:
+    widget: "number_field"
+    label: "Number of hours"
+    value: 12
+    min: 1
+    max: 168
+    step: 1
+    help: "Wall time in hours (must fit the chosen partition's limit)."
+
+  tb_logdir:
+    label: "Log directory"
+    widget: "text_field"
+    required: true
+    help: "Full path to the directory containing your TensorBoard event logs (e.g. a training run's output)."
+
+  tb_extra_args:
+    label: "Extra TensorBoard args (optional)"
+    widget: "text_field"
+    value: ""
+    help: "Passed verbatim to `tensorboard` (e.g. --samples_per_plugin images=100)."
+
+  tb_binary:
+    label: "TensorBoard binary"
+    widget: "text_field"
+    value: "/data/vazquez/users/iv064/software/miniforge3/envs/tensorboard_env/bin/tensorboard"
+    help: "Path to the tensorboard executable (a conda env), or just 'tensorboard' if on PATH."
+
+form:
+  - queue
+  - num_cores
+  - memory
+  - num_hours
+  - tb_logdir
+  - tb_extra_args
+  - tb_binary

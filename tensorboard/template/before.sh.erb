@@ -1,0 +1,9 @@
+# Export the module function if it exists
+[[ $(type -t module) == "function" ]] && export -f module
+
+# Find an available port for TensorBoard to listen on
+port=$(find_port)
+
+# TensorBoard has no authentication of its own; access is gated by the OnDemand
+# login + reverse proxy. No password needed for the connection file.
+password=""
