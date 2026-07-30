@@ -33,17 +33,33 @@ export XDG_RUNTIME_DIR="$(mktemp -d)"
 ) &
 
 #
+# Stage a writable Fiji install.
+#
+# The .sif is read-only, so Fiji's updater warns "your ImageJ cannot be updated
+# because it is read-only" and update sites (StarDist, DeepImageJ, ...) can't
+# install. Copy Fiji.app to a node-local writable dir for this session so the
+# updater and plugin installation work. Set FIJI_HOME to a path under $HOME if you
+# want installed plugins to persist across sessions (first launch is slower).
+export FIJI_HOME="${FIJI_HOME:-${TMPDIR:-/tmp}/fiji-${USER}-${SLURM_JOB_ID:-$$}}"
+if [ ! -x "${FIJI_HOME}/ImageJ-linux64" ]; then
+  echo "Staging a writable Fiji install at ${FIJI_HOME} ..."
+  mkdir -p "${FIJI_HOME}"
+  cp -a /opt/Fiji.app/. "${FIJI_HOME}/"
+fi
+FIJI_LAUNCHER="${FIJI_HOME}/ImageJ-linux64"
+
+#
 # Start Fiji
 #
 set -x
 # GPU node -> hardware-accelerated GL (3D Viewer) via VirtualGL; CPU node -> Mesa
-# software GL. `fiji` is on PATH inside the container (wraps the ImageJ launcher).
+# software GL.
 if command -v nvidia-smi >/dev/null 2>&1 && command -v vglrun >/dev/null 2>&1; then
-  vglrun fiji
+  vglrun "${FIJI_LAUNCHER}"
 else
   export LIBGL_ALWAYS_SOFTWARE=1
   export GALLIUM_DRIVER=llvmpipe
-  fiji
+  "${FIJI_LAUNCHER}"
 fi
 
 # Keep the desktop alive if Fiji is closed so the user can relaunch from a terminal
