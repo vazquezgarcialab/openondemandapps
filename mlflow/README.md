@@ -36,9 +36,11 @@ with mlflow.start_run():
 
 ## Notes
 
-- A **file-based** backend store shows runs/metrics/artifacts. The MLflow **model registry** needs a
-  database backend (e.g. sqlite/postgres) and is disabled with a file store — point `--backend-store-uri`
-  at a database if you need it.
+- A **file-based** backend store shows runs/metrics/artifacts. MLflow 3.x puts the file store in
+  "maintenance mode" and refuses to start on it unless `MLFLOW_ALLOW_FILE_STORE=true` — the launcher sets
+  this for you. The **model registry** and newest features need a **database** backend: put a
+  `sqlite:///…/mlflow.db` URI in the *Tracking directory* field (the launcher passes any `scheme://…`
+  value through to `--backend-store-uri` unchanged).
 - Access is gated by the OnDemand login + reverse proxy (no separate MLflow auth).
 - `cluster: "nucleus"` in `form.yml` must match the cluster id in
   `/etc/ood/config/clusters.d/*.yml` on the portal host.

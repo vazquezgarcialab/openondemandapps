@@ -17,15 +17,25 @@ mkdir -p "${MLFLOW_DIR}"
 
 echo "TIMING - Starting mlflow server at: $(date)"
 
+# MLflow 3.x puts the filesystem tracking backend in "maintenance mode" and
+# refuses to start on a file store unless this is set. The common use here is
+# viewing an existing file-based ./mlruns, so opt in. (Point MLFLOW_DIR at a
+# sqlite:// URI instead for the model registry / newest features.)
+export MLFLOW_ALLOW_FILE_STORE=true
+
 # Serve under the OnDemand /node reverse-proxy prefix so the UI's asset and API
 # URLs resolve (the /node proxy does not strip the prefix) — MLflow's own
 # --static-prefix handles this, analogous to TensorBoard's --path_prefix. Bind all
-# interfaces so the proxy on the OnDemand host can reach this compute node. A
-# file-based backend store shows runs written by a training script's default
-# ./mlruns (the model registry needs a database backend, so it's disabled here).
+# interfaces so the proxy on the OnDemand host can reach this compute node. If the
+# tracking directory looks like a URI (e.g. sqlite:///...), pass it through as-is;
+# otherwise treat it as a local directory (file store).
+case "${MLFLOW_DIR}" in
+  *://*) STORE_URI="${MLFLOW_DIR}" ;;
+  *)     STORE_URI="file:${MLFLOW_DIR}" ;;
+esac
 set -x
 exec "${MLFLOW_BIN}" server \
   --host 0.0.0.0 \
   --port "${port}" \
-  --backend-store-uri "file:${MLFLOW_DIR}" \
+  --backend-store-uri "${STORE_URI}" \
   --static-prefix "/node/${host}/${port}"
