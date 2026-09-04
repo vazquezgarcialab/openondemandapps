@@ -35,7 +35,7 @@ attributes:
     min: 0
     max: 2
     step: 1
-    help: "NVIDIA L40S GPUs (48 GB each). Only the `gpu-l40s` partition has GPUs (2 per node); it is reserved for GPU jobs, so selecting it requests at least one. Ignored (forced to 0) on every CPU partition."
+    help: "NVIDIA L40S GPUs (48 GB each). Used for hardware-accelerated OpenGL in the 3D Viewer. Note Fiji's deep-learning update sites (StarDist, DeepImageJ) will still run on CPU — their engines need CUDA 10.1/11.8, which Nucleus does not have; see the app README. Only `gpu-l40s` has GPUs, and it is reserved for GPU jobs."
 
 
   memory:

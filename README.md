@@ -16,7 +16,7 @@ SLURM cluster at Mass General Brigham, served from the portal at
 | `qupath` | QuPath desktop GUI in an XFCE/VNC session (large bioimage / whole-slide data). GPU-capable (StarDist/InstanSeg/WSInfer via DJL). |
 | `blender` | Blender 3D suite desktop GUI in an XFCE/VNC session (software GL on CPU nodes, VirtualGL + Cycles GPU on `gpu-l40s`). |
 | `napari` | napari n-dimensional image viewer in an XFCE/VNC session; bundles cellpose (deep-learning segmentation, GPU-capable). |
-| `fiji` | Fiji (ImageJ) image-analysis desktop in an XFCE/VNC session; Trainable Weka built in, StarDist/DeepImageJ via update sites. GPU-capable. |
+| `fiji` | Fiji (ImageJ) image-analysis desktop in an XFCE/VNC session; Trainable Weka built in, StarDist/DeepImageJ via update sites. GPU for the 3D Viewer only. |
 | `cellxgene` | cellxgene viewer for an `.h5ad` file (path entered in the form). |
 | `tensorboard` | TensorBoard server for ML training logs (scalars, graphs, embeddings). |
 | `marimo` | marimo reactive Python notebook server (git-friendly `.py` notebooks). GPU-capable. |
@@ -90,7 +90,7 @@ job, at most 2 GPUs, 8 h wall time**, and at most **two running jobs** per user.
 | `jupyter`, `marimo`, `vscode`, `vscode_tunnel` | run CUDA code (PyTorch/JAX/TensorFlow) from a notebook or terminal |
 | `rstudio` | CUDA-backed R packages (`torch`, `keras`) |
 | `napari` | cellpose segmentation on the GPU + hardware OpenGL |
-| `fiji` | GPU plugins via update sites (StarDist, DeepImageJ) + 3D Viewer OpenGL |
+| `fiji` | hardware OpenGL in the 3D Viewer (**not** its deep-learning update sites — see below) |
 | `blender` | Cycles GPU rendering (CUDA/OptiX) + hardware OpenGL |
 | `qupath` | StarDist / InstanSeg / WSInfer via the Deep Java Library |
 | **not offered:** `tensorboard`, `mlflow`, `cellxgene`, `igv` | pure viewers / tracking UIs — nothing in them uses a GPU |
@@ -125,6 +125,14 @@ selects a CUDA engine only if it detects a CUDA *runtime* — the driver alone i
 `qupath` launcher also binds `/apps` and puts the cluster's newest CUDA 12.x on `LD_LIBRARY_PATH`
 (QuPath 0.7.0 → DJL 0.36.0 → PyTorch 2.7.1 → CUDA 12.8; `CUDA/12.9.0` is compatible, CUDA 13 is not).
 See [`qupath/README.md`](qupath/README.md).
+
+**Fiji's deep-learning plugins stay on the CPU.** Fiji gets the `gpu-l40s` option for its 3D Viewer, not
+for StarDist/DeepImageJ: those engines are pinned to CUDA 10.1 (`imagej-tensorflow`, TF 1.15/1.16) and
+CUDA 11.7/11.8 (JDLL's newest Linux GPU PyTorch engine, 2.0.0 on DJL 0.22.1), and the cluster has only
+CUDA 12.9 and 13.3 — the CUDA 10 path could not drive an Ada card in any case. The `fiji` launcher
+therefore deliberately does *not* copy QuPath's CUDA-on-`LD_LIBRARY_PATH` trick, which would only push
+DJL toward a `cu12` engine that does not exist. Details and an opt-in workaround in
+[`fiji/README.md`](fiji/README.md).
 
 **Hardware OpenGL in the VNC apps.** `napari`, `fiji`, and `blender` render through **VirtualGL's EGL
 back end** (`vglrun -d egl`) on a GPU node — the compute nodes are headless, so VirtualGL's default GLX

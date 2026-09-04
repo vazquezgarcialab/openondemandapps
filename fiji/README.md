@@ -47,8 +47,36 @@ Fiji's **3D Viewer** renders via OpenGL — **software** Mesa (`llvmpipe`) on th
 end is required: the compute nodes are headless, so VirtualGL's default GLX back end has no X server on
 the GPU to attach to.) The launcher falls back to software GL if that probe fails.
 
-The container is started with `apptainer --nv`, so the host NVIDIA driver is visible inside it — GPU
-plugins installed through Fiji's update sites (StarDist, DeepImageJ, CSBDeep) can reach the card.
+The container is started with `apptainer --nv`, so the host NVIDIA driver is visible inside it.
+
+### Deep learning on the GPU: expect CPU
+
+Unlike QuPath, **Fiji's deep-learning plugins will not use these GPUs**, and the app deliberately does
+not pretend otherwise. Their engines are pinned to CUDA versions Nucleus does not have — and, in the
+StarDist case, to a CUDA too old to drive an Ada card at all:
+
+| Update site | Engine | CUDA it wants | On Nucleus |
+|---|---|---|---|
+| StarDist, CSBDeep | `imagej-tensorflow`, TF 1.15/1.16 | 10.1 + cuDNN 7.5 | absent — and CUDA 10 predates Ada (`sm_89`, needs ≥ 11.8), so it could never drive an L40S |
+| DeepImageJ | JDLL, newest Linux GPU PyTorch engine 2.0.0 (DJL 0.22.1) | 11.7 / 11.8 | absent — the cluster has only CUDA 12.9 and 13.3 |
+
+Sources: [ImageJ TensorFlow-GPU notes](https://imagej.net/develop/tensorflow) ("`CSBDeep` … comes with
+TensorFlow 1.16.0, which requires CUDA 10.1 and cuDNN >= 7.5.1") and
+[JDLL's engine list](https://github.com/bioimage-io/JDLL/blob/main/src/main/resources/availableDLVersions.json).
+
+This is why the launcher does **not** put a CUDA runtime on `LD_LIBRARY_PATH` the way the `qupath` app
+does. Exposing the cluster's CUDA 12.9 here would be worse than doing nothing: JDLL's DJL layer would
+detect CUDA 12.x, look for a `cu12` build of PyTorch 2.0.0 that does not exist, and fall back to the CPU
+anyway — just more slowly and more confusingly.
+
+**If you want to try it regardless**, DJL can be told to skip detection and fetch a specific flavour,
+which bundles its own CUDA runtime (the driver from `--nv` is then enough):
+
+```bash
+export PYTORCH_FLAVOR=cu118   # before launching Fiji, for DeepImageJ/JDLL only
+```
+
+Untested here — if it works for you, please open an issue and we will wire it into the app.
 
 ## Prerequisites on ERIS Nucleus
 
