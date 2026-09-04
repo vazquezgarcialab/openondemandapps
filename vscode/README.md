@@ -4,10 +4,25 @@ Launches VS Code (`serve-web`) on an ERIS Nucleus compute node — a browser IDE
 via the OnDemand "Connect" button.
 
 ## Features
-- Select ERIS Nucleus partition (`normal`, `bigmem`, `long`, `short`, `interactive`)
+- Select ERIS Nucleus partition (`normal`, `bigmem`, `long`, `short`, `interactive`, `gpu-l40s`)
+- Request 1–2 NVIDIA L40S GPUs on `gpu-l40s` (48 GB each, 8 h max wall time)
 - Specify number of cores and memory
 - **Exclude specific nodes** from the allocation
 - Custom VS Code binary path (default `~/.local/bin/code`)
+
+## GPU sessions
+
+Select the **`gpu-l40s`** partition to land on one of the three NVIDIA L40S nodes (2 GPUs of 48 GB and
+~1 TB RAM per node). The form requests at least one GPU there — the partition is reserved for GPU jobs —
+and clamps wall time to the partition's 8 h limit. SLURM exports `CUDA_VISIBLE_DEVICES`, and the job log
+records the allocation (`nvidia-smi -L`) at startup.
+
+The NVIDIA driver lives on the node itself, so nothing extra is needed to reach the card:
+run CUDA code from the integrated terminal or a notebook kernel using a CUDA build of your
+framework, or `module load CUDA/12.9.0`.
+
+Partition limits (from `scontrol show partition gpu-l40s`): 1 node per job, max 2 GPUs, 8 h wall time,
+and at most two of your jobs running at once.
 
 ## Prerequisites on ERIS Nucleus
 Install the standalone VS Code CLI to `~/.local/bin/code`

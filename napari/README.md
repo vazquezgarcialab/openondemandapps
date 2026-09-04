@@ -32,10 +32,20 @@ Build on a compute node (the login node's memory cap kills `mksquashfs`); use a 
 
 ## GPU note
 
-The image renders via **software OpenGL** (Mesa `llvmpipe`) on CPU nodes and is **VirtualGL-ready**:
-on a GPU node the launcher runs napari under `vglrun` automatically. PyTorch is currently the **CPU**
-build (GPU partitions aren't available yet) — when GPU nodes arrive, rebuild swapping the CUDA PyTorch
-wheel so cellpose can use the GPU.
+Pick the **`gpu-l40s`** partition to run on an NVIDIA L40S (48 GB); the form then requests a GPU
+automatically and caps wall time at 8 h.
+
+- **Display:** software OpenGL (Mesa `llvmpipe`) on the CPU partitions; on `gpu-l40s` the launcher runs
+  napari under `vglrun -d egl` for hardware-accelerated OpenGL. (The EGL back end is required — the
+  compute nodes are headless, so VirtualGL's default GLX back end has no X server on the GPU to attach
+  to.) It falls back to software GL if the probe fails.
+- **cellpose:** the image ships the **CUDA 12.8 PyTorch** wheels, so cellpose segmentation runs on the
+  GPU when one is allocated and on the CPU otherwise. The container is started with `apptainer --nv`,
+  which exposes the host NVIDIA driver inside it.
+
+> The CUDA PyTorch switch landed in [`container/napari.def`](container/napari.def) — **the shared
+> `napari.sif` must be rebuilt** for cellpose to use the GPU. Until then the running image still has the
+> CPU-only build (display acceleration works either way).
 
 ## Prerequisites on ERIS Nucleus
 

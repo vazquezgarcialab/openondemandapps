@@ -2,6 +2,13 @@
   cores = num_cores.to_i
   mem   = memory.to_i
   hours = num_hours.to_i
+  # GPUs live only on the gpu-* partitions, and those are reserved for GPU jobs
+  # (partition QOS `gpu_required`) — so force at least one GPU there and none
+  # elsewhere, whichever way the form's dynamic JS left the field.
+  gpus  = queue.to_s.start_with?("gpu") ? [num_gpus.to_i, 1].max : 0
+  # gpu-l40s caps wall time at 8 h; clamp so the job is accepted rather than
+  # rejected at submit. Raise this if MGB raises the partition's MaxTime.
+  hours = [hours, 8].min if gpus > 0
 -%>
 ---
 batch_connect:
@@ -22,7 +29,15 @@ batch_connect:
     %s
     EOF
     chmod u+x container.sh
-    "${CONTAINER_CMD}" exec "<%= blender_image %>" /bin/bash "$(readlink -f container.sh)"
+    # Expose the host NVIDIA driver + userspace libraries inside the container
+    # when the job actually has a GPU (`--nv`); on CPU nodes the flag list stays
+    # empty. SLURM sets CUDA_VISIBLE_DEVICES for --gpus jobs.
+    NV_OPT=()
+    if [ -n "${CUDA_VISIBLE_DEVICES:-}" ] && command -v nvidia-smi >/dev/null 2>&1; then
+      NV_OPT=(--nv)
+    fi
+
+    "${CONTAINER_CMD}" exec "${NV_OPT[@]}" "<%= blender_image %>" /bin/bash "$(readlink -f container.sh)"
 script:
   native:
     - "--partition"
@@ -35,3 +50,7 @@ script:
     - "<%= mem %>G"
     - "--time"
     - "<%= hours %>:00:00"
+    <%- if gpus > 0 -%>
+    - "--gpus"
+    - "<%= gpus %>"
+    <%- end -%>

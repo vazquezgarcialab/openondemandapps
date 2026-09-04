@@ -24,6 +24,15 @@ STATUS_FILE="${LOG_DIR}/vscode_tunnel_status.txt"
 # Initialize status file
 echo "Starting tunnel..." > "${STATUS_FILE}"
 
+# Report the SLURM GPU allocation into the job log (empty on the CPU partitions).
+# The NVIDIA driver is installed on the node itself, so CUDA-enabled frameworks in
+# your module / conda env pick the card up with no extra setup — pair the gpu-l40s
+# partition with e.g. `module load CUDA/12.9.0` or a CUDA build of PyTorch.
+if [ -n "${CUDA_VISIBLE_DEVICES:-}" ]; then
+  echo "GPU allocation: CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}"
+  nvidia-smi -L || true
+fi
+
 # Start VS Code Tunnel
 echo "TIMING - Starting VS Code tunnel at: $(date)"
 echo "Tunnel name: ${TUNNEL_NAME}"

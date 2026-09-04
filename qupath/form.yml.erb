@@ -11,13 +11,14 @@ attributes:
   queue:
     widget: "select"
     label: "Partition"
-    help: "ERIS Nucleus SLURM partition. Wall-time limits differ per partition."
+    help: "ERIS Nucleus SLURM partition. Wall-time limits differ per partition. Pick `gpu-l40s` for an NVIDIA L40S GPU (48 GB, 2 per node, 8 h max) — that partition is reserved for GPU jobs, so at least one GPU is always requested there."
     options:
-      - [ "normal (1 day, default)",   "normal" ]
-      - [ "bigmem (2 days, ~1TB RAM)", "bigmem" ]
-      - [ "long (7 days)",             "long" ]
-      - [ "short (3 hours)",           "short" ]
-      - [ "interactive (12 hours)",    "interactive" ]
+      - [ "normal (1 day, default)",   "normal",      data-max-num-hours: 24,  data-max-num-cores: 96,  data-set-num-gpus: 0, data-hide-num-gpus: true ]
+      - [ "bigmem (2 days, ~1TB RAM)", "bigmem",      data-max-num-hours: 48,  data-max-num-cores: 96,  data-set-num-gpus: 0, data-hide-num-gpus: true ]
+      - [ "long (7 days)",             "long",        data-max-num-hours: 168, data-max-num-cores: 96,  data-set-num-gpus: 0, data-hide-num-gpus: true ]
+      - [ "short (3 hours)",           "short",       data-max-num-hours: 3,   data-max-num-cores: 96,  data-set-num-gpus: 0, data-hide-num-gpus: true ]
+      - [ "interactive (12 hours)",    "interactive", data-max-num-hours: 12,  data-max-num-cores: 96,  data-set-num-gpus: 0, data-hide-num-gpus: true ]
+      - [ "gpu-l40s (8 hours, NVIDIA L40S)", "gpu-l40s", data-max-num-hours: 8, data-set-num-hours: 8, data-max-num-cores: 128, data-min-num-gpus: 1, data-max-num-gpus: 2, data-set-num-gpus: 1 ]
 
   num_cores:
     widget: "number_field"
@@ -26,7 +27,16 @@ attributes:
     max: 96
     min: 1
     step: 1
-    help: "Max cores per node: 96 (normal). Check `sinfo` for other partitions."
+    help: "Max cores per node: 96 on the CPU partitions, 128 on `gpu-l40s`. Check `sinfo` for the rest."
+  num_gpus:
+    widget: "number_field"
+    label: "Number of GPUs"
+    value: 0
+    min: 0
+    max: 2
+    step: 1
+    help: "NVIDIA L40S GPUs (48 GB each). Used by QuPath's deep-learning extensions (StarDist, InstanSeg, WSInfer) through the Deep Java Library; the viewer itself does not need one. Only the `gpu-l40s` partition has GPUs, and it is reserved for GPU jobs, so selecting it requests at least one."
+
 
   memory:
     widget: "number_field"
@@ -55,6 +65,7 @@ attributes:
 form:
   - queue
   - num_cores
+  - num_gpus
   - memory
   - num_hours
   - qupath_image

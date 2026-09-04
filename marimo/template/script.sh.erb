@@ -12,6 +12,15 @@ MARIMO_BIN="${MARIMO_BIN/#\~/$HOME}"
 NB="<%= context.notebook_path %>"
 NB="${NB/#\~/$HOME}"
 
+# Report the SLURM GPU allocation into the job log (empty on the CPU partitions).
+# The NVIDIA driver is installed on the node itself, so CUDA-enabled frameworks in
+# your module / conda env pick the card up with no extra setup — pair the gpu-l40s
+# partition with e.g. `module load CUDA/12.9.0` or a CUDA build of PyTorch.
+if [ -n "${CUDA_VISIBLE_DEVICES:-}" ]; then
+  echo "GPU allocation: CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}"
+  nvidia-smi -L || true
+fi
+
 echo "TIMING - Starting marimo at: $(date)"
 
 # marimo serves under the OnDemand /node reverse proxy: --base-url sets the path

@@ -1,3 +1,15 @@
+<%-
+  cores = num_cores.to_i
+  mem   = memory.to_i
+  hours = num_hours.to_i
+  # GPUs live only on the gpu-* partitions, and those are reserved for GPU jobs
+  # (partition QOS `gpu_required`) — so force at least one GPU there and none
+  # elsewhere, whichever way the form's dynamic JS left the field.
+  gpus  = queue.to_s.start_with?("gpu") ? [num_gpus.to_i, 1].max : 0
+  # gpu-l40s caps wall time at 8 h; clamp so the job is accepted rather than
+  # rejected at submit. Raise this if MGB raises the partition's MaxTime.
+  hours = [hours, 8].min if gpus > 0
+-%>
 ---
 batch_connect:
   template: "basic"
@@ -12,11 +24,15 @@ script:
      - "-n"
      - "1"
      - "-c"
-     - "<%= num_cores %>"
+     - "<%= cores %>"
      - "--mem"
-     - "<%= memory %>G"
+     - "<%= mem %>G"
      - "-t"
-     - "0-<%= num_hours %>:00:00"
+     - "0-<%= hours %>:00:00"
+     <%- if gpus > 0 -%>
+     - "--gpus"
+     - "<%= gpus %>"
+     <%- end -%>
      <%- if !excluded_nodes.blank? -%>
      - "--exclude"
      - "<%= excluded_nodes %>"
