@@ -13,7 +13,7 @@ SLURM cluster at Mass General Brigham, served from the portal at
 | `vscode` | VS Code `serve-web` (browser IDE, opened via the OOD "Connect" button). GPU-capable. |
 | `vscode_tunnel` | VS Code tunnel (connect from a local VS Code / vscode.dev). GPU-capable. |
 | `igv` | IGV desktop GUI in an XFCE/VNC session (large genomic data). |
-| `qupath` | QuPath desktop GUI in an XFCE/VNC session (large bioimage / whole-slide data). |
+| `qupath` | QuPath desktop GUI in an XFCE/VNC session (large bioimage / whole-slide data). GPU-capable (StarDist/InstanSeg/WSInfer via DJL). |
 | `blender` | Blender 3D suite desktop GUI in an XFCE/VNC session (software GL on CPU nodes, VirtualGL + Cycles GPU on `gpu-l40s`). |
 | `napari` | napari n-dimensional image viewer in an XFCE/VNC session; bundles cellpose (deep-learning segmentation, GPU-capable). |
 | `fiji` | Fiji (ImageJ) image-analysis desktop in an XFCE/VNC session; Trainable Weka built in, StarDist/DeepImageJ via update sites. GPU-capable. |
@@ -92,7 +92,8 @@ job, at most 2 GPUs, 8 h wall time**, and at most **two running jobs** per user.
 | `napari` | cellpose segmentation on the GPU + hardware OpenGL |
 | `fiji` | GPU plugins via update sites (StarDist, DeepImageJ) + 3D Viewer OpenGL |
 | `blender` | Cycles GPU rendering (CUDA/OptiX) + hardware OpenGL |
-| **not offered:** `tensorboard`, `mlflow`, `cellxgene`, `igv`, `qupath` | pure viewers / tracking UIs — nothing in them uses a GPU |
+| `qupath` | StarDist / InstanSeg / WSInfer via the Deep Java Library |
+| **not offered:** `tensorboard`, `mlflow`, `cellxgene`, `igv` | pure viewers / tracking UIs — nothing in them uses a GPU |
 
 To enable it for one of the excluded apps, copy the `gpu-l40s` option row plus the `num_gpus` attribute
 from e.g. `jupyter/form.yml`, and the `gpus` block from its `submit.yml.erb`.
@@ -114,10 +115,16 @@ form shows the right bounds (128 cores on `gpu-l40s` vs 96 elsewhere).
 `CUDA_VISIBLE_DEVICES` and the launchers log `nvidia-smi -L` at startup. For CUDA toolkits/cuDNN the
 cluster has modules `CUDA/12.9.0`, `CUDA/13.3.0`, `cuDNN/9.23.0.39-CUDA-13.3.0`.
 
-**Containerized apps** (`rstudio`, `napari`, `fiji`, `blender`) add `apptainer --nv` when — and only
-when — a GPU was allocated, bind-mounting the host driver and its userspace libraries into the image.
-RStudio additionally re-exports `CUDA_VISIBLE_DEVICES` into the `rsession` wrapper, since `rserver`
-starts sessions with a stripped environment.
+**Containerized apps** (`rstudio`, `napari`, `fiji`, `blender`, `qupath`) add `apptainer --nv` when —
+and only when — a GPU was allocated, bind-mounting the host driver and its userspace libraries into the
+image. RStudio additionally re-exports `CUDA_VISIBLE_DEVICES` into the `rsession` wrapper, since
+`rserver` starts sessions with a stripped environment.
+
+**QuPath needs one thing more.** Its deep-learning extensions go through the Deep Java Library, which
+selects a CUDA engine only if it detects a CUDA *runtime* — the driver alone is not enough. So the
+`qupath` launcher also binds `/apps` and puts the cluster's newest CUDA 12.x on `LD_LIBRARY_PATH`
+(QuPath 0.7.0 → DJL 0.36.0 → PyTorch 2.7.1 → CUDA 12.8; `CUDA/12.9.0` is compatible, CUDA 13 is not).
+See [`qupath/README.md`](qupath/README.md).
 
 **Hardware OpenGL in the VNC apps.** `napari`, `fiji`, and `blender` render through **VirtualGL's EGL
 back end** (`vglrun -d egl`) on a GPU node — the compute nodes are headless, so VirtualGL's default GLX

@@ -2,6 +2,13 @@
   cores = num_cores.to_i
   mem   = memory.to_i
   hours = num_hours.to_i
+  # GPUs live only on the gpu-* partitions, and those are reserved for GPU jobs
+  # (partition QOS `gpu_required`) — so force at least one GPU there and none
+  # elsewhere, whichever way the form's dynamic JS left the field.
+  gpus  = queue.to_s.start_with?("gpu") ? [num_gpus.to_i, 1].max : 0
+  # gpu-l40s caps wall time at 8 h; clamp so the job is accepted rather than
+  # rejected at submit. Raise this if MGB raises the partition's MaxTime.
+  hours = [hours, 8].min if gpus > 0
 -%>
 ---
 batch_connect:
@@ -18,7 +25,9 @@ batch_connect:
     # the container. libmunge lives in /lib64 on ERIS Nucleus; /etc/slurm only on
     # compute nodes.
     # $HOME (/PHShome/<user>) is a symlink into /PHShome_actual — bind both so it resolves in the container
-    export APPTAINER_BINDPATH="/data,/PHShome,/PHShome_actual,/run/munge,/usr/lib64/slurm,/lib64/libmunge.so.2$( [ -d /etc/slurm ] && echo ,/etc/slurm )"
+    # /apps carries the cluster's CUDA runtime, which QuPath's Deep Java Library
+    # needs to detect before it will pick a GPU engine (see the NV_OPT block below).
+    export APPTAINER_BINDPATH="/data,/PHShome,/PHShome_actual,/apps,/run/munge,/usr/lib64/slurm,/lib64/libmunge.so.2$( [ -d /etc/slurm ] && echo ,/etc/slurm )"
     export SINGULARITY_BINDPATH="${APPTAINER_BINDPATH}"
 
     cat << "EOF" > container.sh
@@ -26,11 +35,28 @@ batch_connect:
     export PATH="$PATH:/opt/TurboVNC/bin"
     # websockify is pip-installed at /usr/local/bin here (OOD's default is /opt/websockify/run)
     export WEBSOCKIFY_CMD=/usr/local/bin/websockify
+    # QuPath's deep-learning extensions (StarDist, InstanSeg, WSInfer) run through the
+    # Deep Java Library, which downloads a CUDA build of its PyTorch engine only if it
+    # can detect a CUDA *runtime* — the driver that `--nv` injects is not enough. Put
+    # the cluster's newest CUDA 12.x on the path: QuPath 0.7.0 -> DJL 0.36.0 ->
+    # PyTorch 2.7.1 -> CUDA 12.8, and 12.9 is compatible. Deliberately not CUDA 13,
+    # which would make DJL look for an engine flavour that doesn't exist.
+    if [ -n "${CUDA_VISIBLE_DEVICES:-}" ]; then
+      CUDA_LIB="$(ls -d /apps/software/CUDA/12.*/targets/x86_64-linux/lib 2>/dev/null | sort -V | tail -1)"
+      [ -n "${CUDA_LIB}" ] && export LD_LIBRARY_PATH="${CUDA_LIB}:${LD_LIBRARY_PATH}"
+    fi
     %s
     EOF
     chmod u+x container.sh
 
-    "${CONTAINER_CMD}" exec "<%= qupath_image %>" /bin/bash "$(readlink -f container.sh)"
+    # Expose the host NVIDIA driver + userspace libraries inside the container when
+    # the job actually has a GPU (`--nv`); on CPU nodes the flag list stays empty.
+    NV_OPT=()
+    if [ -n "${CUDA_VISIBLE_DEVICES:-}" ] && command -v nvidia-smi >/dev/null 2>&1; then
+      NV_OPT=(--nv)
+    fi
+
+    "${CONTAINER_CMD}" exec "${NV_OPT[@]}" "<%= qupath_image %>" /bin/bash "$(readlink -f container.sh)"
 
 script:
   native:
@@ -44,3 +70,7 @@ script:
     - "<%= mem %>G"
     - "--time"
     - "<%= hours %>:00:00"
+    <%- if gpus > 0 -%>
+    - "--gpus"
+    - "<%= gpus %>"
+    <%- end -%>
