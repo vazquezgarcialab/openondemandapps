@@ -39,10 +39,19 @@ export QT_QPA_PLATFORM=xcb
 # Start napari
 #
 set -x
-# GPU node -> hardware-accelerated GL via VirtualGL; CPU node -> Mesa software GL.
-if command -v nvidia-smi >/dev/null 2>&1 && command -v vglrun >/dev/null 2>&1; then
-  vglrun napari
+# GPU node -> hardware-accelerated OpenGL through VirtualGL. The compute nodes are
+# headless (no X server bound to the GPU), so VirtualGL's default GLX back end has
+# nothing to attach to — use its EGL back end (`-d egl`), which renders straight to
+# the NVIDIA device and reads back into the Xvnc session. Verified on gpu-l40s:
+# "OpenGL renderer string: NVIDIA L40S/PCIe/SSE2", OpenGL 4.6.
+# CPU node (or a GPU we can't render on) -> Mesa software GL (llvmpipe).
+VGLRUN=/opt/VirtualGL/bin/vglrun
+if [ -n "${CUDA_VISIBLE_DEVICES:-}" ] && [ -x "${VGLRUN}" ] \
+   && "${VGLRUN}" -d egl /opt/VirtualGL/bin/glxinfo -B >/dev/null 2>&1; then
+  echo "GPU detected -- rendering napari through VirtualGL (EGL back end)"
+  "${VGLRUN}" -d egl napari
 else
+  echo "No usable GPU -- rendering napari with Mesa software OpenGL (llvmpipe)"
   export LIBGL_ALWAYS_SOFTWARE=1
   export GALLIUM_DRIVER=llvmpipe
   napari

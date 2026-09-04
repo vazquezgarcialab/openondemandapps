@@ -3,8 +3,9 @@ From: ubuntu:22.04
 
 # Apptainer image bundling TurboVNC + XFCE (window manager only) + napari for the
 # Open OnDemand `vnc` app on ERIS/nucleus. napari is a Qt app rendering via
-# OpenGL -> software Mesa (llvmpipe) on CPU nodes, VirtualGL (`vglrun`) on GPU
-# nodes. Bundles cellpose for deep-learning segmentation. Build:
+# OpenGL -> software Mesa (llvmpipe) on CPU nodes, VirtualGL (`vglrun -d egl`) on
+# the gpu-l40s nodes. Bundles cellpose (CUDA PyTorch) for deep-learning
+# segmentation. Build:
 #   module load Apptainer/1.4.2-1.el9
 #   export APPTAINER_CACHEDIR=/data/vazquez/users/$USER/.apptainer/cache
 #   apptainer build napari.sif napari.def
@@ -12,7 +13,7 @@ From: ubuntu:22.04
 
 %labels
     Maintainer Vazquez-Garcia Lab
-    App napari image viewer desktop for Open OnDemand (VNC, software OpenGL)
+    App napari image viewer desktop for Open OnDemand (VNC; software OpenGL on CPU nodes, VirtualGL + CUDA on gpu-l40s)
 
 %post
     set -eux
@@ -45,9 +46,10 @@ From: ubuntu:22.04
     apt-get install -y /tmp/turbovnc.deb
     rm -f /tmp/turbovnc.deb
 
-    # VirtualGL — for GPU nodes (hardware-accelerated GL via `vglrun`). Harmless on
-    # CPU nodes, where the launcher falls back to Mesa software GL. Bundled now so
-    # the image is GPU-ready once GPU partitions arrive.
+    # VirtualGL — hardware-accelerated GL on the `gpu-l40s` nodes, where the
+    # launcher runs the app under `vglrun -d egl` (EGL back end: the nodes are
+    # headless, so there is no X server on the GPU for the default GLX back end).
+    # Harmless on CPU nodes, where the launcher falls back to Mesa software GL.
     VGL_VER=3.1.2
     wget -O /tmp/virtualgl.deb \
         https://github.com/VirtualGL/virtualgl/releases/download/${VGL_VER}/virtualgl_${VGL_VER}_amd64.deb
@@ -56,11 +58,13 @@ From: ubuntu:22.04
 
     pip3 install --no-cache-dir --upgrade pip
 
-    # PyTorch (CPU build for now — GPU nodes aren't available yet). When GPU
-    # partitions arrive, rebuild swapping this for the CUDA wheel so cellpose can
-    # use the GPU (the launcher already runs napari under vglrun on GPU nodes).
+    # PyTorch, CUDA 12.8 build — cellpose runs its segmentation network on the
+    # GPU when the session is launched on the `gpu-l40s` partition, and falls back
+    # to the CPU automatically otherwise. cu128 wheels need driver >= 525; the
+    # L40S nodes run 595.x, and sm_89 (Ada) has been supported since CUDA 11.8.
+    # These wheels bundle the CUDA runtime, so the image needs no CUDA toolkit.
     pip3 install --no-cache-dir torch torchvision \
-        --index-url https://download.pytorch.org/whl/cpu
+        --index-url https://download.pytorch.org/whl/cu128
 
     # napari (full: Qt backend + built-in plugins) and cellpose (segmentation).
     pip3 install --no-cache-dir "napari[all]" cellpose
@@ -78,3 +82,5 @@ From: ubuntu:22.04
     /opt/TurboVNC/bin/vncserver --help 2>&1 | head -1 || true
     python3 -c "import napari; print('napari', napari.__version__)"
     python3 -c "import cellpose; print('cellpose', cellpose.version)" || true
+    # No GPU during the build, so this only checks the CUDA build imports cleanly.
+    python3 -c "import torch; print('torch', torch.__version__, 'cuda build', torch.version.cuda)"

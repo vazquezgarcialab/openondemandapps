@@ -33,6 +33,15 @@ if <%- if context.conda_env.empty? -%>python<%- else -%>conda run -n <%= context
   echo "c.ServerApp.kernel_spec_manager_class = 'nb_conda_kernels.CondaKernelSpecManager'" >> "${CONFIG_FILE}"
 fi
 
+# Report the SLURM GPU allocation into the job log (empty on the CPU partitions).
+# The NVIDIA driver is installed on the node itself, so CUDA-enabled frameworks in
+# your module / conda env pick the card up with no extra setup — pair the gpu-l40s
+# partition with e.g. `module load CUDA/12.9.0` or a CUDA build of PyTorch.
+if [ -n "${CUDA_VISIBLE_DEVICES:-}" ]; then
+  echo "GPU allocation: CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}"
+  nvidia-smi -L || true
+fi
+
 # Benchmark info
 echo "TIMING - Starting jupyter at: $(date)"
 

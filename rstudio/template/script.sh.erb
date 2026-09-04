@@ -36,6 +36,11 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
 
   export XDG_CACHE_HOME="\${HOME}/.cache/"
 
+  # rsession is started by rserver with a stripped environment, so re-export the
+  # SLURM GPU allocation here — otherwise R packages that talk to CUDA (torch,
+  # keras, ...) see no device even on a gpu-l40s node.
+  export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}"
+
   # Cap BLAS/OpenMP threads to the SLURM cpuset (Rocker's OpenBLAS/MKL otherwise
   # spawn one thread per physical core on the node and oversubscribe shared nodes).
   export OMP_NUM_THREADS="\${SLURM_CPUS_ON_NODE:-\${SLURM_CPUS_PER_TASK:-1}}"
@@ -88,7 +93,9 @@ export RSTUDIO_USER="${USER}"
 #   - SLURM/munge so the rsession can submit jobs from inside the container:
 #     /run/munge, libmunge (in /lib64 on ERIS Nucleus), SLURM plugins (/usr/lib64/slurm),
 #     and /etc/slurm (present on compute nodes)
-"${CONTAINER_CMD}" exec -B "$TMPDIR:/tmp" \
+# `--nv` (only when SLURM gave us a GPU) bind-mounts the host NVIDIA driver and
+# its userspace libraries into the container so CUDA works inside RStudio.
+"${CONTAINER_CMD}" exec $( [ -n "${CUDA_VISIBLE_DEVICES:-}" ] && echo --nv ) -B "$TMPDIR:/tmp" \
  -B "$TMPDIR/run:/run" \
  -B "$TMPDIR/var-lib-rstudio-server:/var/lib/rstudio-server" \
  -B "$TMPDIR/database.conf:/etc/rstudio/database.conf" \

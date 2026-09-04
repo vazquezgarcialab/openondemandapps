@@ -39,8 +39,16 @@ Build on a compute node (the login node's memory cap kills `mksquashfs`); use a 
 
 ## GPU note
 
-Fiji's **3D Viewer** renders via OpenGL — **software** Mesa (`llvmpipe`) on CPU nodes, and the launcher
-runs Fiji under `vglrun` automatically on GPU nodes (the image is VirtualGL-ready).
+Pick the **`gpu-l40s`** partition to run on an NVIDIA L40S (48 GB); the form then requests a GPU
+automatically and caps wall time at 8 h.
+
+Fiji's **3D Viewer** renders via OpenGL — **software** Mesa (`llvmpipe`) on the CPU partitions, and on
+`gpu-l40s` the launcher runs Fiji under `vglrun -d egl` for hardware-accelerated OpenGL. (The EGL back
+end is required: the compute nodes are headless, so VirtualGL's default GLX back end has no X server on
+the GPU to attach to.) The launcher falls back to software GL if that probe fails.
+
+The container is started with `apptainer --nv`, so the host NVIDIA driver is visible inside it — GPU
+plugins installed through Fiji's update sites (StarDist, DeepImageJ, CSBDeep) can reach the card.
 
 ## Prerequisites on ERIS Nucleus
 

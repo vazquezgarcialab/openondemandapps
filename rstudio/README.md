@@ -5,10 +5,27 @@ node, opened in the browser via the OnDemand "Connect" button.
 
 ## Form options
 
-- **Partition** — ERIS Nucleus SLURM partition (`normal`, `bigmem`, `long`, `short`, `interactive`)
+- **Partition** — ERIS Nucleus SLURM partition (`normal`, `bigmem`, `long`, `short`, `interactive`,
+  `gpu-l40s`). Picking `gpu-l40s` requests a GPU automatically and caps wall time at 8 h.
+- **Number of GPUs** — 0–2 NVIDIA L40S (48 GB each); only meaningful on `gpu-l40s`
 - **Number of cores / Memory / Number of hours** — job resources
 - **RStudio image version** — the Apptainer image to run (auto-selects the matching R library)
 - **R packages library** — per-version `R_LIBS_USER` (created on first launch)
+
+## GPU sessions
+
+Select the **`gpu-l40s`** partition to land on one of the three NVIDIA L40S nodes (2 GPUs of 48 GB and
+~1 TB RAM per node). The form requests at least one GPU there — the partition is reserved for GPU jobs —
+and clamps wall time to the partition's 8 h limit. SLURM exports `CUDA_VISIBLE_DEVICES`, and the job log
+records the allocation (`nvidia-smi -L`) at startup.
+
+The NVIDIA driver lives on the node itself, so nothing extra is needed to reach the card:
+the container is started with `apptainer --nv`, and the launcher re-exports `CUDA_VISIBLE_DEVICES`
+into the `rsession` environment (rserver otherwise strips it), so R packages such as `torch` see
+the card.
+
+Partition limits (from `scontrol show partition gpu-l40s`): 1 node per job, max 2 GPUs, 8 h wall time,
+and at most two of your jobs running at once.
 
 ## Prerequisites on ERIS Nucleus
 

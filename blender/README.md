@@ -8,16 +8,27 @@ an Apptainer image bundling TurboVNC + XFCE + Blender.
 
 ## Form options
 
-- **Partition** — ERIS Nucleus SLURM partition (`normal`, `bigmem`, `long`, `short`, `interactive`)
-- **Number of cores / Memory / Number of hours** — job resources (more cores speed up CPU rendering)
+- **Partition** — ERIS Nucleus SLURM partition (`normal`, `bigmem`, `long`, `short`, `interactive`,
+  `gpu-l40s`). Picking `gpu-l40s` requests a GPU automatically and caps wall time at 8 h.
+- **Number of GPUs** — 0–2 NVIDIA L40S (48 GB each); only meaningful on `gpu-l40s`
+- **Number of cores / Memory / Number of hours** — job resources (more cores speed up *CPU* rendering;
+  on a GPU node let Cycles use the card instead)
 - **Blender Apptainer image** — path to the `.sif` (default `/data/vazquez/ondemand/images/blender/blender.sif`)
 
 ## Rendering / OpenGL
 
-nucleus is currently CPU-only, so Blender's UI runs with **Mesa software OpenGL** (`llvmpipe`). The image
-also bundles **VirtualGL**, and the launcher auto-detects a GPU: when GPU nodes become available (and a
-`--gres=gpu` option is added to the form), it will use `vglrun blender` for hardware-accelerated GL and
-GPU rendering — **no image rebuild needed**.
+On the CPU partitions Blender's UI runs with **Mesa software OpenGL** (`llvmpipe`).
+
+On **`gpu-l40s`** the launcher detects the allocated GPU (`CUDA_VISIBLE_DEVICES`) and runs Blender under
+**VirtualGL's EGL back end** — `vglrun -d egl blender` — giving hardware-accelerated OpenGL 4.6 on the
+L40S. The EGL back end is required because the compute nodes are headless: there is no X server bound to
+the GPU for VirtualGL's default GLX back end to attach to. If the probe fails for any reason the launcher
+falls back to software GL, so a session never dies over graphics.
+
+For **Cycles GPU rendering** you still have to select the device once per session:
+*Edit → Preferences → System → Cycles Render Devices → CUDA* (or *OptiX*), tick the L40S, then set
+*Render Properties → Device → GPU Compute*. Blender stores that in `~/.config/blender`, so it persists
+across sessions.
 
 ## Build the image
 
