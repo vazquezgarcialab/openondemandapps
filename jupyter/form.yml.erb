@@ -19,16 +19,37 @@
     false
   end
 -%>
+# Batch Connect app configuration file
+#
+# @note Used to define the submitted cluster, title, description, and
+#   hard-coded/user-defined attributes that make up this Batch Connect app.
 ---
+
+# **MUST** set cluster id here that matches cluster configuration file located
+# under /etc/ood/config/clusters.d/*.yml
+# @example Use the Owens cluster at Ohio Supercomputer Center
+#     cluster: "owens"
 # NOTE: must match the cluster id in ERIS Nucleus's /etc/ood/config/clusters.d/*.yml
 cluster: "nucleus"
 
+# Define attribute values that aren't meant to be modified by the user within
+# the Dashboard form
 attributes:
-  modules:
-    label: "Modules"
-    widget: "text_field"
-    value: ""
-    help: "Space-separated list of modules to load (e.g. 'python/3.11'). Leave blank for none."
+  # Set the corresponding modules that need to be loaded for Jupyter to run
+  #
+  # @note It is called within the batch job as `module load <modules>` if
+  #   defined
+  # @example Do not load any modules
+  #     modules: ""
+  # @example Using default python module
+  #     modules: "python"
+  # On ERIS/nucleus, JupyterLab is provided by the `JupyterLab` module
+  # (use `JupyterNotebook` instead for the classic Notebook 7 UI).
+  modules: "JupyterLab"
+
+  # Any extra command line arguments to feed to the `jupyter notebook ...`
+  # command that launches the Jupyter notebook within the batch job
+  extra_jupyter_args: ""
 
   queue:
     widget: "select"
@@ -44,7 +65,6 @@ attributes:
       <%- if h200_allowed -%>
       - [ "H200 (14 days, NVIDIA H200 141 GB)", "<%= h200_partition %>", data-max-num-hours: 336, data-max-num-cores: 128, data-max-memory: 2000, data-min-num-gpus: 1, data-max-num-gpus: 8, data-set-num-gpus: 1 ]
       <%- end -%>
-
   num_cores:
     widget: "number_field"
     label: "Number of cores"
@@ -61,17 +81,11 @@ attributes:
     max: 8
     step: 1
     help: "NVIDIA GPUs. `gpu-l40s`: up to 2 L40S (48 GB each), 8 h. H200 (only listed once MGB has granted you access): up to 8 H200 (141 GB each), 14 days. Both partitions are reserved for GPU jobs, so selecting one requests at least one GPU. Ignored (forced to 0) on the CPU partitions."
-
-
   memory:
-    widget: "number_field"
-    label: "Memory (GB)"
     value: 8
     max: 1000
-    min: 1
-    step: 1
-    help: "Requested memory in GB"
-
+    step: 4
+    help: "Requested memory (GB)"
   num_hours:
     widget: "number_field"
     label: "Number of hours"
@@ -80,31 +94,37 @@ attributes:
     min: 1
     step: 1
     help: "Wall time in hours (must fit the chosen partition's limit)."
+  jupyter_binary:
+    label: Jupyter Binary
+    help: "Jupyter launcher (jupyter-lab for the full Lab IDE, or jupyter-notebook for the classic UI)."
+    value: 'jupyter-lab'
+  conda_env:
+    label: Conda Environment Name
+    help: "Optional: name of a conda env to launch jupyter from. Leave blank to use the module/binary directly."
+    value: ''
+  notebook_directory:
+    label: Notebooks directory
+    help: Enter a path to the notebooks (defaults to $HOME if blank)
+    value: ''
+  envscript:
+    label: Environment setup script
+    help: "Optional: a file to `source` before launch (activate a venv, spack, etc.). Leave blank if unused."
+    value: ''
 
-  excluded_nodes:
-    widget: "text_field"
-    label: "Excluded Nodes"
-    help: "Comma-separated list of nodes to exclude (e.g. node01,node02). Leave blank if none."
 
-  vscode_binary:
-    label: VS Code Binary
-    help: "Path to the VS Code CLI (e.g. ~/.local/bin/code). Install the standalone CLI from https://update.code.visualstudio.com/latest/cli-linux-x64/stable."
-    value: '~/.local/bin/code'
-
-  tunnel_name:
-    label: Tunnel Name
-    widget: 'text_field'
-    value: 'nucleus_compute'
-    help: "Name for the VS Code tunnel. Used to identify your tunnel connection."
-
+# All of the attributes that make up the Dashboard form (in respective order),
+# and made available to the submit configuration file and the template ERB
+# files
 form:
   - modules
+  - extra_jupyter_args
   - queue
   - num_cores
   - num_gpus
   - num_hours
   - memory
-  - excluded_nodes
-  - vscode_binary
-  - tunnel_name
+  - jupyter_binary
+  - conda_env
+  - notebook_directory
+  - envscript
   - bc_email_on_started

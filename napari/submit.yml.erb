@@ -2,13 +2,19 @@
   cores = num_cores.to_i
   mem   = memory.to_i
   hours = num_hours.to_i
-  # GPUs live only on the gpu-* partitions, and those are reserved for GPU jobs
-  # (partition QOS `gpu_required`) — so force at least one GPU there and none
-  # elsewhere, whichever way the form's dynamic JS left the field.
-  gpus  = queue.to_s.start_with?("gpu") ? [num_gpus.to_i, 1].max : 0
-  # gpu-l40s caps wall time at 8 h; clamp so the job is accepted rather than
-  # rejected at submit. Raise this if MGB raises the partition's MaxTime.
-  hours = [hours, 8].min if gpus > 0
+  # GPU partitions and their limits, from `scontrol -a show partition`. Both are
+  # reserved for GPU jobs (QOS `gpu_required`), so a listed partition always gets
+  # at least one GPU, capped at the per-node count, and wall time clamped to its
+  # MaxTime; any other partition never gets --gpus. This holds whatever the
+  # form's dynamic JS left in the fields. Update the table when MGB changes a
+  # partition (or renames devel-gpu).
+  gpu_partitions = {
+    "gpu-l40s"  => { max_gpus: 2, max_hours: 8 },    # 2x L40S per node, open to all
+    "devel-gpu" => { max_gpus: 8, max_hours: 336 },  # 8x H200 per node, by request
+  }
+  part  = gpu_partitions[queue.to_s]
+  gpus  = part ? num_gpus.to_i.clamp(1, part[:max_gpus]) : 0
+  hours = [hours, part[:max_hours]].min if part
 -%>
 ---
 batch_connect:

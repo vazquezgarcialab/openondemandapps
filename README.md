@@ -70,13 +70,14 @@ app or icon doesn't show up, hard-refresh the page (icons are cached aggressivel
 - **Cluster id:** every app declares `cluster: "nucleus"` — this matches the OOD cluster config in
   `/etc/ood/config/clusters.d/*.yml` on the portal host.
 - **Partitions:** forms offer `normal` (default, 1 day), `bigmem` (2 days, ~1 TB), `long` (7 days),
-  `short` (3 h), `interactive` (12 h), and — on the GPU-capable apps — `gpu-l40s` (8 h, NVIDIA L40S).
+  `short` (3 h), `interactive` (12 h), and — on the GPU-capable apps — `gpu-l40s` (8 h, NVIDIA L40S) and,
+  for users MGB has granted access, H200 (`devel-gpu`, 14 days).
   Jobs run under the user's SLURM account (QOS `nuc_default`); the forms don't pin an account, so the
   user's default is used.
 - **Filesystems:** `/data` (lab data) and `/PHShome` (home).
 - **Containers:** Apptainer via `module load Apptainer/1.4.2-1.el9` (falls back to `singularity/latest`).
 
-## GPUs (`gpu-l40s`)
+## GPUs (`gpu-l40s`, H200)
 
 Nucleus has **three GPU nodes** (`erishpc-gpu-003..005`), each with **2 × NVIDIA L40S** (48 GB) and
 ~1 TB RAM, in the **`gpu-l40s`** partition. Limits from `scontrol show partition gpu-l40s`: **1 node per
@@ -96,20 +97,48 @@ job, at most 2 GPUs, 8 h wall time**, and at most **two running jobs** per user.
 | **not offered:** `tensorboard`, `mlflow`, `cellxgene`, `igv` | pure viewers / tracking UIs — nothing in them uses a GPU |
 
 To enable it for one of the excluded apps, copy the `gpu-l40s` option row plus the `num_gpus` attribute
-from e.g. `jupyter/form.yml`, and the `gpus` block from its `submit.yml.erb`.
+from e.g. `jupyter/form.yml.erb`, and the GPU table block from its `submit.yml.erb`.
 
-**How it's wired.** Each GPU-capable app gains a **Number of GPUs** field (0–2), and its
-`submit.yml.erb` derives the SLURM request server-side:
+### H200 (by request)
+
+MGB also runs **2 nodes with 8 × NVIDIA H200 (141 GB)** each, 128 CPUs and ~2 TB RAM, in the
+**`devel-gpu`** partition: **14-day wall time**, QOS `gpu_required`. Access is **granted on request**
+(the request form in MGB's H200 announcement) — Slurm restricts it with `AllowGroups`, and anyone else is rejected at submit
+with *"User's group not permitted to use this partition"*.
+
+`jupyter`, `marimo`, `vscode` and `vscode_tunnel` offer an **H200** partition option, but **only to users
+the partition admits**. At form render each of those forms runs `scontrol -a show partition devel-gpu`,
+reads `AllowGroups`, and compares it with the user's groups; the option simply doesn't appear otherwise.
+So nothing changes for anyone until MGB grants them access, and then it shows up with no code change.
+The check fails closed: if Slurm is down, slow (capped at 5 s) or the partition is renamed, the option
+is hidden. The other GPU apps (napari, QuPath, Blender, Fiji, RStudio) stay on L40S — 141 GB is for
+large-model work — but their submit files already know the H200 limits, so offering it there is a one-row
+form change.
+
+If MGB moves the H200s to a differently named partition, update `h200_partition` at the top of those
+four `form.yml.erb` files and the `devel-gpu` key in every GPU app's `submit.yml.erb`.
+
+### How it's wired
+
+Each GPU-capable app has a **Number of GPUs** field, and its `submit.yml.erb` derives the SLURM request
+server-side from one table of GPU partitions:
 
 ```erb
-gpus  = queue.to_s.start_with?("gpu") ? [num_gpus.to_i, 1].max : 0
-hours = [hours, 8].min if gpus > 0
+gpu_partitions = {
+  "gpu-l40s"  => { max_gpus: 2, max_hours: 8 },    # 2x L40S per node, open to all
+  "devel-gpu" => { max_gpus: 8, max_hours: 336 },  # 8x H200 per node, by request
+}
+part  = gpu_partitions[queue.to_s]
+gpus  = part ? num_gpus.to_i.clamp(1, part[:max_gpus]) : 0
+hours = [hours, part[:max_hours]].min if part
 ```
 
-so a `gpu-l40s` job always carries `--gpus` (never rejected by `gpu_required`), a CPU partition never
-does, and wall time can't exceed the partition's 8 h — regardless of what the form's dynamic JS did. The
-partition dropdown also drives `data-set-num-gpus` / `data-max-num-hours` / `data-max-num-cores` so the
-form shows the right bounds (128 cores on `gpu-l40s` vs 96 elsewhere).
+so a GPU partition's job always carries between 1 and the per-node maximum of `--gpus` (never rejected by
+`gpu_required`), any other partition never does, and wall time can't exceed that partition's `MaxTime` —
+regardless of what the form's dynamic JS did. Only partitions listed in the table get GPUs. The partition
+dropdown also drives `data-set-num-gpus` / `data-max-num-hours` / `data-max-num-cores` /
+`data-max-memory` so the form shows the right bounds (128 cores on both GPU partitions vs 96 elsewhere;
+2 TB memory on H200).
 
 **Inside the session.** The NVIDIA driver is installed on the node, so CUDA works directly; SLURM sets
 `CUDA_VISIBLE_DEVICES` and the launchers log `nvidia-smi -L` at startup. For CUDA toolkits/cuDNN the

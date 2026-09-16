@@ -4,7 +4,7 @@ Launches a VS Code tunnel on an ERIS Nucleus compute node, enabling remote acces
 
 ## Features
 - Select ERIS Nucleus partition (`normal`, `bigmem`, `long`, `short`, `interactive`, `gpu-l40s`)
-- Request 1–2 NVIDIA L40S GPUs on `gpu-l40s` (48 GB each, 8 h max wall time)
+- Request 1–2 NVIDIA L40S GPUs on `gpu-l40s` (48 GB each, 8 h max wall time), or 1–8 H200 (141 GB, 14 days) once MGB grants access
 - Specify number of cores and memory
 - Load specific environment modules (blank by default)
 - **Exclude specific nodes** from the allocation
@@ -25,6 +25,11 @@ framework, or `module load CUDA/12.9.0`.
 
 Partition limits (from `scontrol show partition gpu-l40s`): 1 node per job, max 2 GPUs, 8 h wall time,
 and at most two of your jobs running at once.
+
+**H200 (by request).** Once MGB has granted you access to the H200 partition (`devel-gpu`: 8 × H200 of
+141 GB and ~2 TB RAM per node, 14-day wall time), an **H200** option appears in the partition list by
+itself — the form checks the partition's `AllowGroups` against your groups each time it loads. Until then
+it's not shown, because Slurm would reject the job. Request access through the form in MGB's H200 announcement.
 
 ## Prerequisites on ERIS Nucleus
 Install the standalone VS Code CLI to `~/.local/bin/code`
