@@ -9,7 +9,7 @@ via the OnDemand "Connect" button.
   use `JupyterNotebook` for the classic Notebook 7 UI)
 - **Partition** — ERIS Nucleus SLURM partition (`normal`, `bigmem`, `long`, `short`, `interactive`,
   `gpu-l40s`). Picking `gpu-l40s` requests a GPU automatically and caps wall time at 8 h.
-- **Number of GPUs** — 0–2 NVIDIA L40S (48 GB each); only meaningful on `gpu-l40s`
+- **Number of GPUs** — up to 2 L40S (48 GB) on `gpu-l40s`, up to 8 H200 (141 GB) on H200; forced to 0 elsewhere
 - **Number of cores / Memory / Number of minutes** — job resources
 - **Jupyter Binary** — launcher (default `jupyter-lab`; `jupyter-notebook` for the classic UI)
 - **Conda Environment Name** — optional; a conda env to launch from instead of the module/binary
@@ -28,6 +28,11 @@ use a CUDA build of PyTorch/JAX/TensorFlow in your conda env, or add `CUDA/12.9.
 
 Partition limits (from `scontrol show partition gpu-l40s`): 1 node per job, max 2 GPUs, 8 h wall time,
 and at most two of your jobs running at once.
+
+**H200 (by request).** Once MGB has granted you access to the H200 partition (`devel-gpu`: 8 × H200 of
+141 GB and ~2 TB RAM per node, 14-day wall time), an **H200** option appears in the partition list by
+itself — the form checks the partition's `AllowGroups` against your groups each time it loads. Until then
+it's not shown, because Slurm would reject the job. Request access through the form in MGB's H200 announcement.
 
 ## Prerequisites on ERIS Nucleus
 

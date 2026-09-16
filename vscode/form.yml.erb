@@ -1,3 +1,24 @@
+<%-
+  require "open3"
+  require "etc"
+  # NVIDIA H200 partition. MGB grants access on request; rename here (and in
+  # submit.yml.erb) if it moves out of devel-gpu.
+  h200_partition = "devel-gpu"
+  # Offer H200 only to users the partition admits, so nobody picks a queue that
+  # rejects them at submit ("User's group not permitted"). The partition is not
+  # Hidden -- Slurm hides it from non-members via AllowGroups -- so read that list
+  # with `scontrol -a` and compare it with the user's groups (users appear as
+  # their personal group, e.g. md2032). Any failure -- Slurm slow or down, the
+  # partition renamed -- hides the option.
+  h200_allowed = begin
+    out, st = Open3.capture2e("timeout", "5", "scontrol", "-a", "-o", "show", "partition", h200_partition)
+    allow = out[/\bAllowGroups=(\S+)/, 1]
+    mine  = Process.groups.filter_map { |gid| Etc.getgrgid(gid).name rescue nil } << Etc.getpwuid.name
+    st.success? && !allow.nil? && (allow == "ALL" || (allow.split(",") & mine).any?)
+  rescue StandardError
+    false
+  end
+-%>
 ---
 # NOTE: must match the cluster id in ERIS Nucleus's /etc/ood/config/clusters.d/*.yml
 cluster: "nucleus"
@@ -12,14 +33,17 @@ attributes:
   queue:
     widget: "select"
     label: "Partition"
-    help: "ERIS Nucleus SLURM partition. Wall-time limits differ per partition. Pick `gpu-l40s` for an NVIDIA L40S GPU (48 GB, 2 per node, 8 h max) — that partition is reserved for GPU jobs, so at least one GPU is always requested there."
+    help: "ERIS Nucleus SLURM partition. Wall-time limits differ per partition. Pick `gpu-l40s` for an NVIDIA L40S GPU (48 GB, 2 per node, 8 h max). An H200 option (141 GB, 8 per node, 14 days) appears only once MGB has granted you access. GPU partitions are reserved for GPU jobs, so at least one GPU is always requested there."
     options:
-      - [ "normal (1 day, default)",   "normal",      data-max-num-hours: 24,  data-max-num-cores: 96,  data-set-num-gpus: 0, data-hide-num-gpus: true ]
-      - [ "bigmem (2 days, ~1TB RAM)", "bigmem",      data-max-num-hours: 48,  data-max-num-cores: 96,  data-set-num-gpus: 0, data-hide-num-gpus: true ]
-      - [ "long (7 days)",             "long",        data-max-num-hours: 168, data-max-num-cores: 96,  data-set-num-gpus: 0, data-hide-num-gpus: true ]
-      - [ "short (3 hours)",           "short",       data-max-num-hours: 3,   data-max-num-cores: 96,  data-set-num-gpus: 0, data-hide-num-gpus: true ]
-      - [ "interactive (12 hours)",    "interactive", data-max-num-hours: 12,  data-max-num-cores: 96,  data-set-num-gpus: 0, data-hide-num-gpus: true ]
-      - [ "gpu-l40s (8 hours, NVIDIA L40S)", "gpu-l40s", data-max-num-hours: 8, data-set-num-hours: 8, data-max-num-cores: 128, data-min-num-gpus: 1, data-max-num-gpus: 2, data-set-num-gpus: 1 ]
+      - [ "normal (1 day, default)",   "normal",      data-max-num-hours: 24,  data-max-num-cores: 96,  data-max-memory: 1000, data-set-num-gpus: 0, data-hide-num-gpus: true ]
+      - [ "bigmem (2 days, ~1TB RAM)", "bigmem",      data-max-num-hours: 48,  data-max-num-cores: 96,  data-max-memory: 1000, data-set-num-gpus: 0, data-hide-num-gpus: true ]
+      - [ "long (7 days)",             "long",        data-max-num-hours: 168, data-max-num-cores: 96,  data-max-memory: 1000, data-set-num-gpus: 0, data-hide-num-gpus: true ]
+      - [ "short (3 hours)",           "short",       data-max-num-hours: 3,   data-max-num-cores: 96,  data-max-memory: 1000, data-set-num-gpus: 0, data-hide-num-gpus: true ]
+      - [ "interactive (12 hours)",    "interactive", data-max-num-hours: 12,  data-max-num-cores: 96,  data-max-memory: 1000, data-set-num-gpus: 0, data-hide-num-gpus: true ]
+      - [ "gpu-l40s (8 hours, NVIDIA L40S)", "gpu-l40s", data-max-num-hours: 8, data-set-num-hours: 8, data-max-num-cores: 128, data-max-memory: 1000, data-min-num-gpus: 1, data-max-num-gpus: 2, data-set-num-gpus: 1 ]
+      <%- if h200_allowed -%>
+      - [ "H200 (14 days, NVIDIA H200 141 GB)", "<%= h200_partition %>", data-max-num-hours: 336, data-max-num-cores: 128, data-max-memory: 2000, data-min-num-gpus: 1, data-max-num-gpus: 8, data-set-num-gpus: 1 ]
+      <%- end -%>
 
   num_cores:
     widget: "number_field"
@@ -34,9 +58,9 @@ attributes:
     label: "Number of GPUs"
     value: 0
     min: 0
-    max: 2
+    max: 8
     step: 1
-    help: "NVIDIA L40S GPUs (48 GB each). Only the `gpu-l40s` partition has GPUs (2 per node); it is reserved for GPU jobs, so selecting it requests at least one. Ignored (forced to 0) on every CPU partition."
+    help: "NVIDIA GPUs. `gpu-l40s`: up to 2 L40S (48 GB each), 8 h. H200 (only listed once MGB has granted you access): up to 8 H200 (141 GB each), 14 days. Both partitions are reserved for GPU jobs, so selecting one requests at least one GPU. Ignored (forced to 0) on the CPU partitions."
 
 
   memory:

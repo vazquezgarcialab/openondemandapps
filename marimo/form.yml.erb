@@ -19,17 +19,13 @@
     false
   end
 -%>
+# Batch Connect app configuration file
 ---
+
 # NOTE: must match the cluster id in ERIS Nucleus's /etc/ood/config/clusters.d/*.yml
 cluster: "nucleus"
 
 attributes:
-  modules:
-    label: "Modules"
-    widget: "text_field"
-    value: ""
-    help: "Space-separated list of modules to load (e.g. 'python/3.11'). Leave blank for none."
-
   queue:
     widget: "select"
     label: "Partition"
@@ -49,10 +45,10 @@ attributes:
     widget: "number_field"
     label: "Number of cores"
     value: 1
-    max: 96
-    help: "Max cores per node: 96 on the CPU partitions, 128 on `gpu-l40s`. Check `sinfo` for the rest."
     min: 1
+    max: 96
     step: 1
+    help: "Max cores per node: 96 on the CPU partitions, 128 on `gpu-l40s`. Check `sinfo` for the rest."
   num_gpus:
     widget: "number_field"
     label: "Number of GPUs"
@@ -67,44 +63,38 @@ attributes:
     widget: "number_field"
     label: "Memory (GB)"
     value: 8
-    max: 1000
     min: 1
+    max: 1000
     step: 1
-    help: "Requested memory in GB"
+    help: "Requested memory in GB."
 
   num_hours:
     widget: "number_field"
     label: "Number of hours"
     value: 12
-    max: 168
     min: 1
+    max: 168
     step: 1
     help: "Wall time in hours (must fit the chosen partition's limit)."
 
-  excluded_nodes:
+  notebook_path:
+    label: "Notebook or directory (optional)"
     widget: "text_field"
-    label: "Excluded Nodes"
-    help: "Comma-separated list of nodes to exclude (e.g. node01,node02). Leave blank if none."
+    value: ""
+    help: "A marimo `.py` notebook to open, or a directory to browse. Defaults to $HOME."
 
-  vscode_binary:
-    label: VS Code Binary
-    help: "Path to the VS Code CLI (e.g. ~/.local/bin/code). Install the standalone CLI from https://update.code.visualstudio.com/latest/cli-linux-x64/stable."
-    value: '~/.local/bin/code'
-
-  tunnel_name:
-    label: Tunnel Name
-    widget: 'text_field'
-    value: 'nucleus_compute'
-    help: "Name for the VS Code tunnel. Used to identify your tunnel connection."
+  marimo_binary:
+    label: "marimo binary"
+    widget: "text_field"
+    value: "/data/vazquez/users/iv064/software/miniforge3/envs/marimo_env/bin/marimo"
+    help: "Path to the marimo executable (a conda env), or just 'marimo' if on PATH."
 
 form:
-  - modules
   - queue
   - num_cores
   - num_gpus
-  - num_hours
   - memory
-  - excluded_nodes
-  - vscode_binary
-  - tunnel_name
+  - num_hours
+  - notebook_path
+  - marimo_binary
   - bc_email_on_started
