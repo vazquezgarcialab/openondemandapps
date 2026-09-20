@@ -21,6 +21,7 @@ SLURM cluster at Mass General Brigham, served from the portal at
 | `tensorboard` | TensorBoard server for ML training logs (scalars, graphs, embeddings). |
 | `marimo` | marimo reactive Python notebook server (git-friendly `.py` notebooks). GPU-capable. |
 | `mlflow` | MLflow Tracking server to browse ML experiments, runs, metrics, and artifacts. |
+| `claude_science` | Claude Science — Anthropic's AI research workbench, served in the browser. **Runs the agent unsandboxed — see its README.** |
 
 `igv`, `qupath`, `blender`, `napari`, and `fiji` are **desktop GUI** apps: they use OOD's `vnc` Batch
 Connect template (TurboVNC + noVNC) and run an Apptainer image that bundles TurboVNC + XFCE + the
@@ -53,6 +54,7 @@ git clone https://github.com/vazquezgarcialab/openondemandapps.git ~/ondemand/de
 | `tensorboard` | A conda env with `tensorboard`; the form defaults to a shared `tensorboard_env` |
 | `marimo` | A conda env with `marimo`; the form defaults to a shared `marimo_env` |
 | `mlflow` | A conda env with `mlflow`; the form defaults to a shared `mlflow_env` |
+| `claude_science` | Nothing — shared install at `/data/vazquez/ondemand/claude-science/`. Needs a Claude Pro/Max/Team/Enterprise account. Runs the agent **unsandboxed**; read the app README before enabling. |
 | `rstudio`, `igv`, `qupath`, `blender`, `napari`, `fiji` | Nothing for lab members — the forms point at **shared images** under `/data/vazquez/ondemand/images/` (group-readable). ✅ |
 
 The container images are built once and shared at `/data/vazquez/ondemand/images/{rstudio,igv,qupath,blender,napari,fiji}/`,
