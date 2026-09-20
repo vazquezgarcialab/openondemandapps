@@ -1,0 +1,31 @@
+<%
+  # Written once a minute by script.sh while the daemon runs (see the app
+  # README): sign-in links are single-use and expire in ~3 minutes, so the
+  # button has to pick up a fresh one each time this page renders.
+  nonce_file = File.join(ENV['HOME'], '.cache', host, 'claude_science_nonce.txt')
+  nonce      = File.exist?(nonce_file) ? File.read(nonce_file).strip : ''
+  base       = "/#{proxy_path}/#{host}/#{port}/"
+%>
+<% if nonce.empty? %>
+  <div class="alert alert-info" role="alert">
+    <i class="fa fa-spinner fa-spin"></i>
+    Starting Claude Science… reload this page in a few seconds for the sign-in link.
+  </div>
+<% else %>
+  <form action="<%= base %>" method="get" target="_blank">
+    <input type="hidden" name="nonce" value="<%= nonce %>">
+    <button class="btn btn-primary" type="submit">
+      <i class="fa fa-flask"></i> Connect to Claude Science
+    </button>
+  </form>
+  <div class="alert alert-warning" role="alert" style="margin-top:10px">
+    <i class="fa fa-exclamation-triangle"></i>
+    <strong>No agent sandbox.</strong> It cannot run on these compute nodes, so Claude has
+    full read/write access to your home directory and unrestricted network from this job.
+    Keep an eye on what you point it at.
+  </div>
+  <p class="help-block" style="margin-top:8px">
+    Sign-in links are single-use and expire after ~3 minutes. If the link is rejected,
+    reload this Sessions page and click Connect again — a fresh one is written every minute.
+  </p>
+<% end %>

@@ -1,0 +1,11 @@
+---
+name: Claude Science
+category: Interactive Apps
+subcategory: Servers
+role: batch_connect
+description: |
+  Claude Science — Anthropic's AI research workbench — running on an ERIS Nucleus
+  compute node, opened in your browser through OnDemand. Your data stays on the
+  cluster; only the conversation goes to the Anthropic API.
+
+  Requires a Claude Pro, Max, Team or Enterprise account to sign in.
