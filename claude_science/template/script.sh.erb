@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+echo "TIMING - Starting main script at: $(date)"
+
+cd "${HOME}"
+<%- unless context.project_dir.blank? -%>
+cd "<%= context.project_dir %>"
+<%- end -%>
+
+# Expand paths (handle a leading ~)
+CS_BIN="<%= context.cs_binary %>";  CS_BIN="${CS_BIN/#\~/$HOME}"
+DATA_DIR="<%= context.data_dir %>"; DATA_DIR="${DATA_DIR/#\~/$HOME}"
+mkdir -p "${DATA_DIR}"
+
+# The agent sandbox is deliberately NOT used. It cannot work on Nucleus compute
+# nodes: they boot stateless, so / is rootfs and bubblewrap's pivot_root fails
+# ("Invalid argument"). Verified on every partition -- short, normal, bigmem and
+# gpu-l40s all report root=rootfs -- and inside Apptainer too, where / is an
+# overlay marked unbindable. The login node is the only place it works, and that
+# is not where jobs run. See the app README before changing this.
+#
+# So Claude has full read/write access to $HOME and unrestricted network from
+# this job. The daemon prints its own banner saying so; this line puts it in the
+# OnDemand session log as well.
+echo "NOTE: running WITHOUT the agent sandbox -- Claude has full read/write access"
+echo "      to ${HOME} and unrestricted network from this job (see app README)."
+SANDBOX_FLAG=(--dangerously-no-sandbox)
+
+# Serve under OnDemand's reverse proxy:
+#   --base-path    makes the UI generate its URLs with the proxy prefix while the
+#                  daemon still answers at /, which is why this needs the
+#                  prefix-STRIPPING endpoint (rnode). With plain /node the
+#                  prefix is forwarded and the daemon 404s on its own assets.
+#   --allow-origin lets the portal's origin through the CSRF / WebSocket gate;
+#                  without it sign-in, writes and the live connection are refused.
+#   --host         bind all interfaces so the portal host can reach this node.
+BASE_PATH="/${proxy_path}/${host}/${port}"   # proxy_path is set in before.sh
+PORTAL_ORIGIN="https://openondemand.research.mgb.org"
+
+echo "TIMING - Starting claude-science at: $(date)"
+set -x
+"${CS_BIN}" serve \
+  "${SANDBOX_FLAG[@]}" \
+  --detached \
+  --no-browser \
+  --data-dir "${DATA_DIR}" \
+  --port "${port}" \
+  --sandbox-port "${sandbox_port}" \
+  --host 0.0.0.0 \
+  --base-path "${BASE_PATH}" \
+  --allow-origin "${PORTAL_ORIGIN}" \
+  --no-auto-update
+set +x
+
+# Liveness is tracked by PID, not by polling `status`. `status` can report
+# running:false while the daemon is busy (it spends ~40 s warming MCP
+# connectors at boot), and one false negative used to end the keep-alive loop,
+# which ended the job seconds after the user had signed in.
+cs_status () { "${CS_BIN}" status --data-dir "${DATA_DIR}" 2>/dev/null | tr -d ' \n'; }
+cs_running () { cs_status | grep -q '"running":true'; }
+cs_pid     () { cs_status | sed -n 's/.*"pid":\([0-9]*\).*/\1/p'; }
+
+# Sign-in links are single-use and expire in ~3 minutes, so one generated at job
+# start would be stale before anyone clicks Connect. Refresh one into a file that
+# view.html.erb reads each time the Sessions page renders.
+NONCE_DIR="${HOME}/.cache/${host}"
+NONCE_FILE="${NONCE_DIR}/claude_science_nonce.txt"
+mkdir -p "${NONCE_DIR}"
+rm -f "${NONCE_FILE}"
+
+echo "Waiting for the daemon to accept connections..."
+for _ in $(seq 1 60); do cs_running && break; sleep 2; done
+cs_running || { echo "ERROR: daemon did not start"; "${CS_BIN}" logs --data-dir "${DATA_DIR}" 2>/dev/null | tail -40; exit 1; }
+echo "claude-science is up on ${host}:${port} (sandbox previews on ${sandbox_port})"
+
+CS_PID="$(cs_pid)"
+echo "daemon pid ${CS_PID}; holding the job open until that process exits"
+
+while [ -n "${CS_PID}" ] && kill -0 "${CS_PID}" 2>/dev/null; do
+  # `url` prints only the URL; keep the nonce and let the view rebuild the link
+  # against the proxy, since the printed one points at localhost.
+  if URL="$("${CS_BIN}" url --data-dir "${DATA_DIR}" 2>/dev/null)" && [ "${URL}" != "${URL#*nonce=}" ]; then
+    ( umask 077; printf '%s' "${URL#*nonce=}" > "${NONCE_FILE}.tmp" ) && mv "${NONCE_FILE}.tmp" "${NONCE_FILE}"
+  fi
+  sleep 60
+done
+
+echo "claude-science daemon exited at: $(date)"
+rm -f "${NONCE_FILE}"
+"${CS_BIN}" logs --data-dir "${DATA_DIR}" 2>/dev/null | tail -50
