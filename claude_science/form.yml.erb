@@ -1,0 +1,76 @@
+<%
+  # Shared lab install (group-readable under /data/vazquez). The agent sandbox
+  # cannot work on these compute nodes, so the app always runs unsandboxed and
+  # needs no sandbox helpers -- see the app README.
+  root = "/data/vazquez/ondemand/claude-science"
+%>
+---
+# NOTE: must match the cluster id in ERIS Nucleus's /etc/ood/config/clusters.d/*.yml
+cluster: "nucleus"
+
+attributes:
+  queue:
+    widget: "select"
+    label: "Partition"
+    help: "ERIS Nucleus SLURM partition. Wall-time limits differ per partition. Claude Science drives the Anthropic API and runs analysis code locally, so it is CPU-only — there is no GPU option here (see the app README if you need one)."
+    options:
+      - [ "normal (1 day, default)",   "normal",      data-max-num-hours: 24 ]
+      - [ "bigmem (2 days, ~1TB RAM)", "bigmem",      data-max-num-hours: 48 ]
+      - [ "long (7 days)",             "long",        data-max-num-hours: 168 ]
+      - [ "short (3 hours)",           "short",       data-max-num-hours: 3 ]
+      - [ "interactive (12 hours)",    "interactive", data-max-num-hours: 12 ]
+
+  num_cores:
+    widget: "number_field"
+    label: "Number of cores"
+    value: 4
+    min: 1
+    max: 96
+    step: 1
+    help: "Cores for the analysis code Claude runs on your data. Max per node: 96."
+
+  memory:
+    widget: "number_field"
+    label: "Memory (GB)"
+    value: 16
+    min: 1
+    max: 1000
+    step: 1
+    help: "Requested memory in GB (raise it for large single-cell or imaging datasets)."
+
+  num_hours:
+    widget: "number_field"
+    label: "Number of hours"
+    value: 8
+    min: 1
+    max: 168
+    step: 1
+    help: "Wall time in hours (must fit the chosen partition's limit)."
+
+  data_dir:
+    label: "Claude Science data directory"
+    widget: "text_field"
+    value: "<%= ENV['HOME'] %>/.claude-science"
+    help: "Where conversations, artifacts and the database live. Kept between sessions. Move it under /data/vazquez/users/$USER if your home quota is tight — it grows."
+
+  project_dir:
+    label: "Project folder (optional)"
+    widget: "text_field"
+    value: ""
+    help: "A directory to work in, e.g. /data/vazquez/users/$USER/myproject. Only used to open the session there; you grant Claude access to folders from inside the UI."
+
+  cs_binary:
+    label: "claude-science binary"
+    widget: "text_field"
+    value: "<%= root %>/claude-science"
+    help: "Path to the claude-science executable. The shared lab copy is the default."
+
+form:
+  - queue
+  - num_cores
+  - memory
+  - num_hours
+  - data_dir
+  - project_dir
+  - cs_binary
+  - bc_email_on_started

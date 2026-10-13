@@ -1,0 +1,24 @@
+<%-
+  cores = num_cores.to_i
+  mem   = memory.to_i
+  hours = num_hours.to_i
+-%>
+---
+batch_connect:
+  template: "basic"
+  # Carried into connection.yml so view.html.erb can build the Connect URL with
+  # the same proxy endpoint the daemon was told to generate its URLs for.
+  conn_params:
+    - proxy_path
+script:
+  native:
+    - "--partition"
+    - "<%= queue %>"
+    - "--nodes"
+    - "1"
+    - "--ntasks"
+    - "<%= cores %>"
+    - "--mem"
+    - "<%= mem %>G"
+    - "--time"
+    - "<%= hours %>:00:00"

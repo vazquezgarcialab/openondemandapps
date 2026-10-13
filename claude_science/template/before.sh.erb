@@ -1,0 +1,21 @@
+# Export the module function if it exists
+[[ $(type -t module) == "function" ]] && export -f module
+
+# Two ports: the app itself, and a separate one claude-science uses to serve
+# HTML previews Claude generates (kept apart so a previewed page can never read
+# the session). Both sit on this compute node behind OnDemand's proxy.
+port=$(find_port)
+sandbox_port=$(find_port)
+export sandbox_port
+
+# claude-science has its own sign-in (a single-use link), so there is no
+# OnDemand-managed password for this app.
+password=""
+
+# OnDemand proxy endpoint. `rnode` strips the URL prefix before forwarding, which
+# is what claude-science's --base-path requires (the daemon answers at /, not at
+# the prefix). `/node` does NOT strip, so the daemon would 404 on its own assets.
+# Confirmed working on this portal by a real sign-in, so this is fixed rather than
+# a form field. Change it here if MGB ever drops the rnode endpoint.
+# Carried into connection.yml via conn_params so view.html.erb builds the same URL.
+export proxy_path="rnode"
